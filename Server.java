@@ -21,7 +21,7 @@ public class Server {
       System.err.println("Accept failed.");
       System.exit(1);
     }
-    PrintWriter out = new PrintWriter(clientSocket.getOutputStream(), true);
+    DataOutputStream out = new DataOutputStream(clientSocket.getOutputStream());
     BufferedReader in = new BufferedReader(
         new InputStreamReader(
           clientSocket.getInputStream()));
@@ -29,9 +29,12 @@ public class Server {
   
     while ((inputLine = in.readLine()) != null) {
       System.out.println(inputLine);
-      outputLine = inputLine + "+ output";
-      System.out.println(outputLine);
-      out.println(outputLine);
+    /*  File file = new File(inputLine);
+      out.write(file);
+*/
+       FileWriter fw = new FileWriter(inputLine);
+              BufferedWriter bufWriter = new BufferedWriter(fw);
+               bufWriter.close();
     }
     out.close();
     in.close();
