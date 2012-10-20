@@ -12,7 +12,6 @@ public class Server2 {
             Socket sock = servsock.accept();
             try {
             byte[] mybytearray = new byte[1024];
-            fis = new FileInputStream(myFile);
             os = sock.getOutputStream();
 
     BufferedReader in = new BufferedReader(new InputStreamReader(sock.getInputStream()));
@@ -21,6 +20,7 @@ public class Server2 {
         break;
     }
     myFile = new File(inputLine);
+            fis = new FileInputStream(myFile);
             int count;
             while ((count = fis.read(mybytearray)) >= 0) {
                 os.write(mybytearray, 0, count);
