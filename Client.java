@@ -24,27 +24,23 @@ public class Client {
       System.exit(1);
     }
 
+    //Input file name
+    String filename = args[1];
+    System.out.println(filename);
+
+    //Write file to out.println(args[1])
+    out.println(filename);
+
     BufferedReader stdIn = new BufferedReader(new InputStreamReader(System.in));
-    String nextLine;
-    String fromServer;
-    String fromUser;
-    while ((fromServer = in.readLine()) != null) {
-      fromServer = "";
-
-      while(true)
-        nextLine = in.readLine();
+    String inputline;
+    while ((inputline = in.readLine()) != null) {
+    System.out.println(inputline);
     }
-    System.out.println(fromServer);
 
-    fromUser = stdIn.readLine();
-    if (fromUser != null) {
-      out.println(fromUser);
-    }
     out.close();
     in.close();
     stdIn.close();
     socket.close();
 
   }
-
 }
