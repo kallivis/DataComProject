@@ -10,7 +10,7 @@ public class Client {
 
     try 
     {
-      socket = new Socket("localhost", 4444);
+      socket = new Socket("192.168.66.128", 4444);
       out = new PrintWriter(socket.getOutputStream(), true);
       in = new BufferedReader(new InputStreamReader(socket.getInputStream()));
     } 
@@ -25,7 +25,7 @@ public class Client {
     }
 
     //Input file name
-    String filename = args[1];
+    String filename = args[0];
     System.out.println(filename);
 
     //Write file to out.println(args[1])
