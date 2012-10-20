@@ -25,10 +25,12 @@ public class Server {
     BufferedReader in = new BufferedReader(
         new InputStreamReader(
           clientSocket.getInputStream()));
-    String inputLine;
-    String outputLine = "";
+    String inputLine, outputLine;
   
     while ((inputLine = in.readLine()) != null) {
+      System.out.println(inputLine);
+      outputLine = inputLine + "+ output";
+      System.out.println(outputLine);
       out.println(outputLine);
     }
     out.close();
