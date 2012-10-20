@@ -22,7 +22,7 @@ public class Server {
       System.exit(1);
     }
     DataOutputStream out = new DataOutputStream(clientSocket.getOutputStream());
-    BufferedReader in = new BufferedReader(
+    DataInputStream in = new BufferedReader(
         new InputStreamReader(
           clientSocket.getInputStream()));
     String inputLine, outputLine;
