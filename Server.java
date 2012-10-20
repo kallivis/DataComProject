@@ -1,44 +1,39 @@
 import java.net.*;
 import java.io.*;
 
-public class Server {
-  public static void main(String[] args) throws IOException {
+public class Server2 {
 
-    ServerSocket serverSocket = null;
-    try {
-      serverSocket = new ServerSocket(4444);
+    public static void main(String[] args) throws IOException {
+        ServerSocket servsock = new ServerSocket(4444);
+        File myFile = null;
+        FileInputStream fis = null;
+        OutputStream os = null;
+        while (true) {
+            Socket sock = servsock.accept();
+            try {
+            byte[] mybytearray = new byte[1024];
+            fis = new FileInputStream(myFile);
+            os = sock.getOutputStream();
 
-      System.out.println("server start listening... ... ...");
-    } catch (IOException e) {
-      System.err.println("Could not listen on port: 4444.");
-      System.exit(1);
-    }
-
-    Socket clientSocket = null;
-    try {
-      clientSocket = serverSocket.accept();
-    } catch (IOException e) {
-      System.err.println("Accept failed.");
-      System.exit(1);
-    }
-    DataOutputStream out = new DataOutputStream(clientSocket.getOutputStream());
-    DataInputStream in = new BufferedReader(
-        new InputStreamReader(
-          clientSocket.getInputStream()));
-    String inputLine, outputLine;
-  
+    BufferedReader in = new BufferedReader(new InputStreamReader(sock.getInputStream()));
+    String inputLine;
     while ((inputLine = in.readLine()) != null) {
-      System.out.println(inputLine);
-    /*  File file = new File(inputLine);
-      out.write(file);
-*/
-       FileWriter fw = new FileWriter(inputLine);
-              BufferedWriter bufWriter = new BufferedWriter(fw);
-               bufWriter.close();
+        break;
     }
-    out.close();
-    in.close();
-    clientSocket.close();
-    serverSocket.close();
-  }
+    myFile = new File(inputLine);
+            int count;
+            while ((count = fis.read(mybytearray)) >= 0) {
+                os.write(mybytearray, 0, count);
+
+            }
+            os.flush();
+            } finally {
+            fis.close();
+            os.close();
+            sock.close();
+
+            System.out.println("Socket closed");
+            }
+        }
+    }
 }
