@@ -25,7 +25,7 @@ public class Client {
     }
 
     //Input file name
-    String filename = args[1];
+    String filename = args[0];
     System.out.println(filename);
 
     //Write file to out.println(args[1])
