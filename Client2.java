@@ -4,13 +4,16 @@ import java.net.Socket;
 public class Client2   {
 
     public static void main(String[] argv) throws IOException {
-        Socket sock = new Socket("localhost", 4444);
+        Socket sock = new Socket("192.168.0.107", 4444);
         InputStream is = null;
-        FileOutputStream fos = null;
+        OutputStream fos = null;
+        PrintWriter out = null;
 
-        byte[] mybytearray = new byte[1024];
+        byte[] mybytearray = new byte[1024000];
         try {
             is = sock.getInputStream();
+            out = new PrintWriter(sock.getOutputStream(), true);
+            out.println("Sheep.jpg"); 
             fos = new FileOutputStream("LocalSheep.jpg");
 
             int count;
