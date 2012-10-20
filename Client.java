@@ -25,22 +25,12 @@ public class Client {
     }
 
     BufferedReader stdIn = new BufferedReader(new InputStreamReader(System.in));
-    String fromServer;
     String nextLine;
-    String fromUser;
     while ((fromServer = in.readLine()) != null) {
-      if(fromServer.equals("start"))
-      {
         fromServer = "";
 
         while(true)
-        {
           nextLine = in.readLine();
-          if (nextLine.equals("end"))
-              break;
-          else
-              fromServer  = fromServer.concat("\n"+nextLine);
-        }
       }
       System.out.println(fromServer);
       if (fromServer.equals("Quit"))
