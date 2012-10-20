@@ -5,7 +5,6 @@ public class Server {
   public static void main(String[] args) throws IOException {
 
     ServerSocket serverSocket = null;
-    Board board = new Board();
     try {
       serverSocket = new ServerSocket(4444);
 
@@ -26,11 +25,11 @@ public class Server {
     BufferedReader in = new BufferedReader(
         new InputStreamReader(
           clientSocket.getInputStream()));
-    String inputLine, outputLine;
+    String inputLine;
+    String outputLine = "";
+  
     while ((inputLine = in.readLine()) != null) {
       out.println(outputLine);
-      if (outputLine.equals("quit")|| winner != null)
-        break;
     }
     out.close();
     in.close();
