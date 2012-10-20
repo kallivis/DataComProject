@@ -1,7 +1,7 @@
 import java.net.*;
 import java.io.*;
 
-public class Server2 {
+public class Server {
 
     public static void main(String[] args) throws IOException {
         ServerSocket servsock = new ServerSocket(4444);
