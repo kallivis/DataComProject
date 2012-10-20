@@ -13,7 +13,8 @@ public class Client2   {
         try {
             is = sock.getInputStream();
             out = new PrintWriter(sock.getOutputStream(), true);
-            out.println("Sheep.jpg"); 
+            String filename = argv[0];
+            out.println(filename); 
             fos = new FileOutputStream("LocalSheep.jpg");
 
             int count;
