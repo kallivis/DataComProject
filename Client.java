@@ -1,7 +1,7 @@
 import java.io.*;
 import java.net.Socket;
 
-public class Client2   {
+public class Client   {
 
     public static void main(String[] argv) throws IOException {
         Socket sock = new Socket("192.168.0.107", 4444);
