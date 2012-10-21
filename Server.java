@@ -3,37 +3,46 @@ import java.io.*;
 
 public class Server {
 
-    public static void main(String[] args) throws IOException {
-        ServerSocket servsock = new ServerSocket(4444);
-        File myFile = null;
-        FileInputStream fis = null;
-        OutputStream os = null;
-        while (true) {
-            Socket sock = servsock.accept();
-            try {
-            byte[] mybytearray = new byte[1024];
-            os = sock.getOutputStream();
+  public static void main(String[] args) throws IOException {
+    ServerSocket serverSocket = new ServerSocket(3031);
 
-    BufferedReader in = new BufferedReader(new InputStreamReader(sock.getInputStream()));
-    String inputLine;
-    while ((inputLine = in.readLine()) != null) {
-        break;
-    }
-    myFile = new File(inputLine);
-            fis = new FileInputStream(myFile);
-            int count;
-            while ((count = fis.read(mybytearray)) >= 0) {
-                os.write(mybytearray, 0, count);
+    File myFile = null;
+    FileInputStream input = null;
+    OutputStream output = null;
 
-            }
-            os.flush();
-            } finally {
-            fis.close();
-            os.close();
-            sock.close();
+    while (true) {
+      Socket clientSocket = serverSocket.accept();
+      
+      try {
+        byte[] mybytearray = new byte[1024];
+        output = sock.getOutputStream();
 
-            System.out.println("Socket closed");
-            }
+        BufferedReader in = new BufferedReader(
+            new InputStreamReader(clientSocket.getInputStream()));
+        
+        String inputLine;
+
+        while ((inputLine = in.readLine()) != null) {
+          break;
         }
+
+        myFile = new File(inputLine);
+        input = new FileInputStream(myFile);
+        int count;
+        
+        while ((count = input.read(mybytearray)) >= 0) {
+          output.write(mybytearray, 0, count);
+        }
+
+        output.flush();
+      } 
+      finally {
+        input.close();
+        output.close();
+        clientSocket.close();
+
+        System.out.println("Socket closed");
+      }
     }
+  }
 }
