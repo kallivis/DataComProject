@@ -18,8 +18,9 @@ public class Client   {
     InputStream input = null;
     OutputStream output = null;
     PrintWriter out = null;
+    private final FILE_SIZE = 1024000;
 
-    byte[] mybytearray = new byte[1024000];
+    byte[] mybytearray = new byte[FILE_SIZE];
 
     //Establish connection
     try {
