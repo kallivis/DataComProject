@@ -31,7 +31,7 @@ public class Client   {
 
       //Request file
       out.println(filename); 
-      output = new FileOutputStream("LocalSheep.jpg");
+      output = new FileOutputStream("local_"+filename);
 
       int count;
 
