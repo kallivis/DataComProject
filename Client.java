@@ -14,7 +14,7 @@ public class Client   {
 
   public static void main(String[] argv) throws IOException {
 
-    Socket socket = new Socket("192.168.0.107", 4444);
+    Socket socket = new Socket("localhost", 4444);
     InputStream input = null;
     OutputStream output = null;
     PrintWriter out = null;

@@ -29,9 +29,7 @@ public class Server {
         output = clientSocket.getOutputStream();
 
         BufferedReader in = new BufferedReader(
-            new InputStreamReader(clientSocket.getInputStream()));
-
-        String inputLine;
+            new InputStreamReader(clientSocket.getInputStream())); String inputLine;
 
         while ((inputLine = in.readLine()) != null) {
           break;
