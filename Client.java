@@ -1,7 +1,7 @@
 /*
  * Program Name:    Client.java
  * Author(s):       Jeremy Wheaton, 100105823
- *                  Cody McCarthy, 
+ *                  Cody McCarthy,  100097829
  * Version:         1.0 - Oct 22, 2012
  * Purpose:
  * Can recieve a file sent from Server.java.

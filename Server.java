@@ -1,7 +1,7 @@
 /*
  * Program Name:    Server.java
- * Author(s):          Jeremy Wheaton, 100105823
- *                  Cody McCarthy, 
+ * Author(s):       Jeremy Wheaton, 100105823
+ *                  Cody McCarthy,  100097829 
  * Version:         1.0 - Oct 22, 2012
  * Purpose:
  * Can send any requested file from the directory that Server.java is run from
