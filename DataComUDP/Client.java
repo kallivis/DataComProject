@@ -3,7 +3,7 @@ import java.net.*;
 public class Client {
   public static void main(String[] argv)
   {
-    String message = "GET_SHEEP";
+    String message = "FILE_REQUEST";
     try {
 
       File file = new File("localTest.txt");
@@ -22,7 +22,6 @@ public class Client {
       socket.send(packet);
 
 
-
       DatagramPacket rpacket = new DatagramPacket(buffer, buffer.length);
 
       while (true) {
@@ -30,15 +29,15 @@ public class Client {
         if (rpacket.getLength() <= 9) {
           String cmd = new String(rpacket.getData(), 0,
               rpacket.getLength());
-          if (cmd.equals("END_SHEEP")) {
-            System.out.println("C:Fin de transmission");
+          if (cmd.equals("END_REQUEST")) {
+            System.out.println("File transferred");
             break;
           }
         }
         fos.write(rpacket.getData(), 0, rpacket.getLength());
       }
 
-      System.out.println("tmp.raw -> " + file.length());
+      System.out.println("File length - " + file.length());
 
     } catch (FileNotFoundException e) {
       e.printStackTrace();

@@ -1,11 +1,12 @@
 import java.io.*;
 import java.net.*;
 import java.nio.*;
+
 public class Server {
 
   public static void main(String[] args) throws Exception {
 
-    byte[] buff = new byte[64];
+    byte[] buff = new byte[64000]; //was 64...
     DatagramPacket packet = new DatagramPacket(buff, buff.length);
     DatagramSocket socket = new DatagramSocket(3031);
 
@@ -30,15 +31,15 @@ public class Server {
 
     public void run() {
       String cmd = new String(packet.getData(), 0, packet.getLength());
-      if (cmd.equals("GET_SHEEP")) {
-        System.out.println("GETTING SHEEP");
+      if (cmd.equals("FILE_REQUEST")) {
+        System.out.println("FILE REQUESTED");
         try {
           read_and_send_video(this.packet.getAddress());
         } catch (IOException e) {
           e.printStackTrace();
         }
       } else {
-        System.out.println("S:Exiting ....");
+        System.out.println("Socket Exiting ....");
         System.exit(0);
       }
     }
@@ -60,7 +61,6 @@ public class Server {
         size = fis.read(buffer);
         System.out.println("Size = " + size);
 
-        // Envoi du contenu du fichier
         pack = new DatagramPacket(buffer, buffer.length, address,
             packet.getPort());
         if (size == -1) {
@@ -70,7 +70,7 @@ public class Server {
         socket.send(pack);
       }
 
-      String cmd = "END_SHEEP";
+      String cmd = "END_REQUEST";
       pack = new DatagramPacket(cmd.getBytes(), cmd.getBytes().length,
           address, packet.getPort());
       socket.send(pack);
@@ -79,15 +79,3 @@ public class Server {
 
   }
 }
-
-
-
-
-
-
-
-
-
-
-
-
