@@ -6,7 +6,7 @@ public class Server {
 
   public static void main(String[] args) throws Exception {
 
-    byte[] buff = new byte[64000]; //was 64...
+    byte[] buff = new byte[200]; //was 64...
     DatagramPacket packet = new DatagramPacket(buff, buff.length);
     DatagramSocket socket = new DatagramSocket(3031);
 
@@ -53,21 +53,23 @@ public class Server {
       DatagramPacket pack;
 
       int size = 0;
-      byte[] buffer = new byte[(int) file.length()];
-      ByteBuffer bb = ByteBuffer.allocate(4);
-      bb.order(ByteOrder.BIG_ENDIAN);
+      byte[] fileBuffer = new byte[(int) file.length()];
+      byte[] buffer = new byte[512];
+     // ByteBuffer bb = ByteBuffer.allocate(2);
+    //  bb.order(ByteOrder.BIG_ENDIAN);
 
       while (true) {
         size = fis.read(buffer);
         System.out.println("Size = " + size);
-
-        pack = new DatagramPacket(buffer, buffer.length, address,
+        byte[] sizeBuff = new byte[size]; 
+        sizeBuff = fileBuffer;
+        pack = new DatagramPacket(sizeBuff, size, address,
             packet.getPort());
-        if (size == -1) {
+        socket.send(pack);
+        if (size < buffer.length) {
           break;
         }
         
-        socket.send(pack);
       }
 
       String cmd = "END_REQUEST";
