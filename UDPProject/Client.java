@@ -3,12 +3,12 @@ import java.net.*;
 public class Client {
   public static void main(String[] args)
   {
-    String filename = args[0];
-    String message = filename; 
-    message = "FILE_REQUEST";
+//    String filename = args[0];
+ //   String message = filename; 
+ String   message = "FILE_REQUEST";
     try {
 
-      File file = new File("local_"+filename);
+      File file = new File("local_test.txt");
       FileOutputStream fos = new FileOutputStream(file);
 
       InetAddress address = InetAddress.getByName("localhost");

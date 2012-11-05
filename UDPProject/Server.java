@@ -62,7 +62,7 @@ public class Server {
         size = fis.read(buffer);
         System.out.println("Size = " + size);
         byte[] sizeBuff = new byte[size]; 
-        sizeBuff = fileBuffer;
+        sizeBuff = buffer;
         pack = new DatagramPacket(sizeBuff, size, address,
             packet.getPort());
         socket.send(pack);
