@@ -8,7 +8,6 @@
  * to the directory Client.java is run from.
  */
 
-
 import java.io.*;
 import java.net.*;
 import java.nio.*;
@@ -17,8 +16,8 @@ public class Server {
 
     public static void main(String[] args) throws Exception
     {
+        byte[] buff = new byte[200];
 
-        byte[] buff = new byte[200]; //need??
         DatagramPacket packet = new DatagramPacket(buff, buff.length);
         DatagramSocket socket = new DatagramSocket(3031);
 
@@ -58,7 +57,8 @@ public class Server {
                 try
                 {
                     SendStream(this.packet.getAddress(), rfile);
-                } catch (IOException e) {
+                } 
+                catch (IOException e) {
                     e.printStackTrace();
                 } 
             }
@@ -75,7 +75,6 @@ public class Server {
             DatagramPacket pack;
 
             int size = 0;
-            byte[] fileBuffer = new byte[(int) file.length()];
             byte[] buffer = new byte[512];
             System.out.println("Transfer started...");
             while (true)
@@ -93,12 +92,6 @@ public class Server {
                 }
 
             }
-
-            String cmd = "END_REQUEST";
-            pack = new DatagramPacket(cmd.getBytes(), cmd.getBytes().length,
-                    address, packet.getPort());
-            socket.send(pack);
-
         }
     }
 }
