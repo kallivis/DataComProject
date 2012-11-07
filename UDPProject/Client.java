@@ -18,8 +18,10 @@ public class Client {
             System.out.println("No file specified!");
             return;
         }
+
         String filename = args[0];
         String message = filename;
+
         try
         {
 
@@ -47,26 +49,31 @@ public class Client {
             }
 
             DatagramPacket rpacket = new DatagramPacket(rData, 
-                rData.length);
+                    rData.length);
 
             System.out.println("Transfer started.");
             while (true) {
                 socket.receive(rpacket);
+                if  (rpacket.getLength() == 0)
+                {
+                    System.out.println("File transferred");
+                    break;
+                }
                 fos.write(rpacket.getData(), 0, rpacket.getLength());
                 if (rpacket.getLength() < 512) {
                     System.out.println("File transferred");
                     break;
                 }
             }
-
             System.out.println("File length - " + file.length());
-
-        } catch (FileNotFoundException e) {
+        } 
+        catch (FileNotFoundException e) {
             e.printStackTrace();
-        } catch (UnknownHostException e) {
-
+        } 
+        catch (UnknownHostException e) {
             e.printStackTrace();
-        } catch (IOException e) {
+        } 
+        catch (IOException e) {
             e.printStackTrace();
         }
 

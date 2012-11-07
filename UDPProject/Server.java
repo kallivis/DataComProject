@@ -45,7 +45,7 @@ public class Server {
         public void run()
         {
             String rfile = new String(packet.getData(), 0, 
-                packet.getLength());
+                    packet.getLength());
             if (rfile.equals("EXIT"))
             {
                 System.out.println("Server Closing.");
@@ -66,20 +66,22 @@ public class Server {
 
 
         private void SendStream(InetAddress address, String 
-            fileName)
+                fileName)
             throws IOException
-            {
+        {
 
             File file = new File(fileName);
             FileInputStream fis = new FileInputStream(file);
             DatagramPacket pack;
 
             int size = 0;
+            int remainingSize = (int) file.length(); 
             byte[] buffer = new byte[512];
             System.out.println("Transfer started...");
             while (true)
             {
                 size = fis.read(buffer);
+                remainingSize -= size;
                 byte[] sizeBuff = new byte[size]; 
                 sizeBuff = buffer;
                 pack = new DatagramPacket(sizeBuff, size, address,
@@ -89,6 +91,15 @@ public class Server {
                 {
                     System.out.println("Transfer finished.");
                     break;
+                }
+                if (remainingSize == 0)  
+                {
+                    pack = new DatagramPacket(new byte[0] , 0, address,
+                            packet.getPort());
+                    socket.send(pack);
+                    System.out.println("Transfer finished.");
+                    break;
+
                 }
 
             }
