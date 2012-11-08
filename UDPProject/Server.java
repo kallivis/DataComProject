@@ -14,7 +14,9 @@ import java.nio.*;
 
 public class Server {
 
-    private final static int PACKET_SIZE = 3000;
+    //This is the size of the packets being sent and recieved 
+    private final static int PACKET_SIZE = 512;
+
     public static void main(String[] args) throws Exception
     {
         byte[] buff = new byte[PACKET_SIZE];
