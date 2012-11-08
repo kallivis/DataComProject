@@ -15,7 +15,7 @@ import java.nio.*;
 public class Server {
 
     //This is the size of the packets being sent and recieved 
-    private final static int PACKET_SIZE = 512;
+    private final static int PACKET_SIZE = 10;
 
     public static void main(String[] args) throws Exception
     {

@@ -1,93 +1,100 @@
+/*
+ * Program Name:    Client.java
+ * Author(s):       Jeremy Wheaton, 100105823
+ *                  Cody McCarthy,  100097829
+ * Version:         2.0 - Nov 2, 2012
+ * Purpose:
+ * Can recieve a file sent from Server.java (using UDP).
+ */
+
 import java.io.*;
 import java.net.*;
-import java.nio.*;
-public class Server {
 
-  public static void main(String[] args) throws Exception {
+public class Client {
 
-    byte[] buff = new byte[64];
-    DatagramPacket packet = new DatagramPacket(buff, buff.length);
-    DatagramSocket socket = new DatagramSocket(3031);
+    //This is the size of the packets being sent and recieved 
+    private final static int PACKET_SIZE = 10;
 
-    System.out.println("Server started at 3031 ...");
-
-    while (true) {
-      socket.receive(packet);
-      new Server.ThreadVideo(socket, packet).run();
-
-    }
-  }
-
-  public static class ThreadVideo implements Runnable {
-
-    private DatagramPacket packet;
-    private DatagramSocket socket;
-
-    public ThreadVideo(DatagramSocket socket, DatagramPacket packet) {
-      this.packet = packet;
-      this.socket = socket;
-    }
-
-    public void run() {
-      String cmd = new String(packet.getData(), 0, packet.getLength());
-      if (cmd.equals("GET_SHEEP")) {
-        System.out.println("GETTING SHEEP");
-        try {
-          read_and_send_video(this.packet.getAddress());
-        } catch (IOException e) {
-          e.printStackTrace();
+    public static void main(String[] args)
+    {
+        // Checks if no command line args were given by usej
+        if (args.length <= 0)
+        {
+            System.out.println("No file specified!");
+            return;
         }
-      } else {
-        System.out.println("S:Exiting ....");
-        System.exit(0);
-      }
-    }
+        //Sets the filename equal to the command line argument
+        String filename = args[0];
+        String message = filename;
 
+        try
+        {
+            //Creates an InetAddress using localhost  
+            InetAddress address = InetAddress.getByName("localhost");
+            //The byte buffer used for data the client is sending
+            byte[] sdata = new byte[PACKET_SIZE]; 
+            //The byte buffer used for data the client is receiving
+            byte[] rData = new byte[PACKET_SIZE];
+            //Puts the message into the sending byte buffer
+            sdata = message.getBytes();
 
-    private void read_and_send_video(InetAddress address)
-      throws IOException {
+            DatagramSocket socket = new DatagramSocket();
+            // Socket timesout after 5 seconds to prevent infinite wait
+            socket.setSoTimeout(5000);
 
-      File file = new File("Sheep3.jpg");
-      FileInputStream fis = new FileInputStream(file);
-      DatagramPacket pack;
+            //Creates the packet and puts in the message 
+            DatagramPacket packet = new DatagramPacket(sdata, sdata.length,
+                    address, 3031);
 
-      int size = 0;
-      byte[] buffer = new byte[(int) file.length()];
-      ByteBuffer bb = ByteBuffer.allocate(4);
-      bb.order(ByteOrder.BIG_ENDIAN);
+            //Sends packet with the message to the server 
+            socket.send(packet);
 
-      while (true) {
-        size = fis.read(buffer);
-        System.out.println("Size = " + size);
+            //Checks if the message is Exit. If so the client exits as well
+            if (message.equals("EXIT"))
+            {
+                System.out.println("Exit request sent.");
+                return;
+            }
+            //Creates a local file to put the data recieved from the server in.
+            File file = new File("local_" + message);
+            //Opens a FileOutputStream to use to write the data in the above file.
+            FileOutputStream fos = new FileOutputStream(file);
+            //Creates the receiving packet for data comming form the server
+            DatagramPacket rpacket = new DatagramPacket(rData, 
+                    rData.length);
 
-        // Envoi du contenu du fichier
-        pack = new DatagramPacket(buffer, buffer.length, address,
-            packet.getPort());
-        if (size == -1) {
-          break;
+            System.out.println("Transfer started.");
+            //The loop to received the packets of requested data.
+            while (true) {
+                //Receives a packet sent from server
+                socket.receive(rpacket);
+                //Checks if the packet size is 0.
+                //If it is it knows the transfer is complete and client ends.
+                if  (rpacket.getLength() == 0)
+                {
+                    System.out.println("File transferred");
+                    break;
+                }
+                //If the packet has data it writes it into the local file.
+                fos.write(rpacket.getData(), 0, rpacket.getLength());
+                //If this packet is smaller than the agree upon size then it knows
+                //that the transfer is complete and client ends.
+                if (rpacket.getLength() < PACKET_SIZE) {
+                    System.out.println("File transferred");
+                    break;
+                }
+            }
+            System.out.println("File length - " + file.length());
+        } 
+        catch (FileNotFoundException e) {
+            e.printStackTrace();
+        } 
+        catch (UnknownHostException e) {
+            e.printStackTrace();
+        } 
+        catch (IOException e) {
+            e.printStackTrace();
         }
-        
-        socket.send(pack);
-      }
-
-      String cmd = "END_SHEEP";
-      pack = new DatagramPacket(cmd.getBytes(), cmd.getBytes().length,
-          address, packet.getPort());
-      socket.send(pack);
 
     }
-
-  }
 }
-
-
-
-
-
-
-
-
-
-
-
-
