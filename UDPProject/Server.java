@@ -14,9 +14,10 @@ import java.nio.*;
 
 public class Server {
 
+    private final static int PACKET_SIZE = 3000;
     public static void main(String[] args) throws Exception
     {
-        byte[] buff = new byte[200];
+        byte[] buff = new byte[PACKET_SIZE];
 
         DatagramPacket packet = new DatagramPacket(buff, buff.length);
         DatagramSocket socket = new DatagramSocket(3031);
@@ -76,7 +77,7 @@ public class Server {
 
             int size = 0;
             int remainingSize = (int) file.length(); 
-            byte[] buffer = new byte[512];
+            byte[] buffer = new byte[PACKET_SIZE];
             System.out.println("Transfer started...");
             while (true)
             {

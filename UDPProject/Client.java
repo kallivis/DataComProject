@@ -11,6 +11,7 @@ import java.io.*;
 import java.net.*;
 
 public class Client {
+    private final static int PACKET_SIZE = 3000;
     public static void main(String[] args)
     {
         if (args.length <= 0)
@@ -25,20 +26,18 @@ public class Client {
         try
         {
 
-            File file = new File("local_" + message);
-            FileOutputStream fos = new FileOutputStream(file);
 
             InetAddress address = InetAddress.getByName("localhost");
 
-            byte[] sdata = new byte[512]; 
-            byte[] rData = new byte[512];
+            byte[] sdata = new byte[PACKET_SIZE]; 
+            byte[] rData = new byte[PACKET_SIZE];
             sdata = message.getBytes();
 
             DatagramSocket socket = new DatagramSocket();
             socket.setSoTimeout(5000);
 
             DatagramPacket packet = new DatagramPacket(sdata, sdata.length,
-                    InetAddress.getByName("localhost"), 3031);
+                    address, 3031);
 
             socket.send(packet);
 
@@ -47,6 +46,8 @@ public class Client {
                 System.out.println("Exit request sent.");
                 return;
             }
+            File file = new File("local_" + message);
+            FileOutputStream fos = new FileOutputStream(file);
 
             DatagramPacket rpacket = new DatagramPacket(rData, 
                     rData.length);
@@ -60,7 +61,7 @@ public class Client {
                     break;
                 }
                 fos.write(rpacket.getData(), 0, rpacket.getLength());
-                if (rpacket.getLength() < 512) {
+                if (rpacket.getLength() < PACKET_SIZE) {
                     System.out.println("File transferred");
                     break;
                 }
