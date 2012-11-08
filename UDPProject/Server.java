@@ -19,6 +19,7 @@ public class Server {
 
     public static void main(String[] args) throws Exception
     {
+
         byte[] buff = new byte[PACKET_SIZE];
 
         DatagramPacket packet = new DatagramPacket(buff, buff.length);
@@ -59,7 +60,7 @@ public class Server {
                 System.out.println("Requested: " + rfile);
                 try
                 {
-                    SendStream(this.packet.getAddress(), rfile);
+                    SendStream(rfile);
                 } 
                 catch (IOException e) {
                     e.printStackTrace();
@@ -68,9 +69,7 @@ public class Server {
         }
 
 
-        private void SendStream(InetAddress address, String 
-                fileName)
-            throws IOException
+        private void SendStream(String fileName) throws IOException
         {
 
             File file = new File(fileName);
@@ -87,7 +86,7 @@ public class Server {
                 remainingSize -= size;
                 byte[] sizeBuff = new byte[size]; 
                 sizeBuff = buffer;
-                pack = new DatagramPacket(sizeBuff, size, address,
+                pack = new DatagramPacket(sizeBuff, size, packet.getAddress(),
                         packet.getPort());
                 socket.send(pack);
                 if (size < buffer.length)
@@ -97,7 +96,7 @@ public class Server {
                 }
                 if (remainingSize == 0)  
                 {
-                    pack = new DatagramPacket(new byte[0] , 0, address,
+                    pack = new DatagramPacket(new byte[0] , 0, packet.getAddress(),
                             packet.getPort());
                     socket.send(pack);
                     System.out.println("Transfer finished.");
