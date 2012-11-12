@@ -13,7 +13,7 @@ import java.net.*;
 public class Client {
 
     //This is the size of the packets being sent and recieved 
-    private final static int PACKET_SIZE = 10;
+    private final static int PACKET_SIZE = 512;
 
     public static void main(String[] args)
     {
@@ -40,7 +40,7 @@ public class Client {
 
             DatagramSocket socket = new DatagramSocket();
             // Socket timesout after 5 seconds to prevent infinite wait
-            socket.setSoTimeout(5000);
+            socket.setSoTimeout(50);
 
             //Creates the packet and puts in the message 
             DatagramPacket packet = new DatagramPacket(sdata, sdata.length,
@@ -68,6 +68,11 @@ public class Client {
             while (true) {
                 //Receives a packet sent from server
                 socket.receive(rpacket);
+                
+                byte[] cmd = "ACK".getBytes();
+                packet = new DatagramPacket(cmd, cmd.length, address, 3031);
+                socket.send(packet);
+                
                 //Checks if the packet size is 0.
                 //If it is it knows the transfer is complete and client ends.
                 if  (rpacket.getLength() == 0)

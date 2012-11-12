@@ -15,7 +15,7 @@ import java.nio.*;
 public class Server {
 
     //This is the size of the packets being sent and recieved 
-    private final static int PACKET_SIZE = 10;
+    private final static int PACKET_SIZE = 512;
 
     public static void main(String[] args) throws Exception
     {
@@ -54,6 +54,7 @@ public class Server {
             this.packet = packet;
             this.socket = socket;
         }
+        
         //The run method of the thread used to check on the request
         //and if a file is requested starts the sendStream 
         public void run()
@@ -74,7 +75,7 @@ public class Server {
                 try
                 {
                     //Starts the SendStream for the given filename
-                    SendStream(filename);
+                    SendStream(filename, socket);
                 } 
                 catch (IOException e) {
                     e.printStackTrace();
@@ -85,11 +86,12 @@ public class Server {
         //Method that takes a filename as it's param
         //and sends the requested file in packets
         //to the client that requested it. 
-        private void SendStream(String fileName) throws IOException
+        private void SendStream(String fileName, DatagramSocket socket) throws IOException
         {
             //Opens a file and a makes a file object from the
             //requested filename for reading.
             File file = new File(fileName);
+            
             //Creates a fileInputStream for reading in the file into a buffer
             FileInputStream fis = new FileInputStream(file);
             //Creates a DatagramPacket packet that will be used to send 
@@ -111,11 +113,13 @@ public class Server {
                 size = fis.read(buffer);
                 //Updates the remaining size by the amount read above
                 remainingSize -= size;
+                
                 //Creates a new buffer the size of the amount read
                 //This is in case the size is less than the PACKET_SIZE 
                 //constant, so that the buffer is of exact size of the
                 //data that we are sending
-                byte[] sizeBuff = new byte[size]; 
+                byte[] sizeBuff = new byte[size];
+                
                 //Copies the buffer into this new buffer
                 sizeBuff = buffer;
                 //Creates a new packet with the above buffer of data.
@@ -123,13 +127,18 @@ public class Server {
                 //address and port.
                 pack = new DatagramPacket(sizeBuff, size, packet.getAddress(),
                         packet.getPort());
+                
                 //Sends the above packet to the client
                 socket.send(pack);
+                socket.setSoTimeout(50);
                 //If the size send was less than PACKET_SIZE then the last
                 //packet was sent and Server is done transfering
+                RecACK(socket, pack);
+                
                 if (size < PACKET_SIZE)
                 {
                     System.out.println("Transfer finished.");
+                    socket.setSoTimeout(0);
                     break;
                 }
                 //If data was a multiple of PACKET_SIZE then the last packet
@@ -145,10 +154,35 @@ public class Server {
                     //Sends the empty packet
                     socket.send(pack);
                     System.out.println("Transfer finished.");
+                    socket.setSoTimeout(0);
                     break;
-
                 }
-
+                
+                
+            }
+        }
+        
+        private void RecACK(DatagramSocket socket, DatagramPacket pack)
+        {
+            byte[] buff = new byte[PACKET_SIZE];
+            
+            DatagramPacket packet = new DatagramPacket(buff, buff.length);
+            
+            try
+            {
+                socket.receive(packet);
+            
+                String cmd = new String(packet.getData(), 0,
+                                    packet.getLength());
+                if (!cmd.equals("ACK"))
+                {
+                    socket.send(pack);
+                    RecACK(socket, pack);
+                }
+            }
+            catch (IOException e)
+            {
+                //Do Nothing
             }
         }
     }
