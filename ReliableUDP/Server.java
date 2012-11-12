@@ -102,9 +102,11 @@ public class Server {
             int size = 0;
             // The remaining size that is left to send of the file
             int remainingSize = (int) file.length(); 
+            byte[] packInfo = "pckt1".getBytes()    ;
+            int infoSize = packInfo.length;
             //The buffer that the file will be read into with a max size
             //determined by the PACKET_SIZE constant
-            byte[] buffer = new byte[PACKET_SIZE];
+            byte[] buffer = new byte[PACKET_SIZE-infoSize];
             System.out.println("Transfer started...");
             while (true)
             {
@@ -118,14 +120,16 @@ public class Server {
                 //This is in case the size is less than the PACKET_SIZE 
                 //constant, so that the buffer is of exact size of the
                 //data that we are sending
-                byte[] sizeBuff = new byte[size];
+                byte[] sizeBuff = new byte[size+infoSize];
                 
                 //Copies the buffer into this new buffer
-                sizeBuff = buffer;
+                System.arraycopy(packInfo,0, sizeBuff, 0, packInfo.length);
+                System.arraycopy(buffer,0, sizeBuff, 5, buffer.length);
+               // sizeBuff = buffer;
                 //Creates a new packet with the above buffer of data.
                 //Uses the initial client packet to get the client's 
                 //address and port.
-                pack = new DatagramPacket(sizeBuff, size, packet.getAddress(),
+                pack = new DatagramPacket(sizeBuff, size+infoSize, packet.getAddress(),
                         packet.getPort());
                 
                 //Sends the above packet to the client
