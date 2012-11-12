@@ -102,7 +102,7 @@ public class Server {
             int size = 0;
             // The remaining size that is left to send of the file
             int remainingSize = (int) file.length(); 
-            byte[] packInfo = "pckt1".getBytes()    ;
+            byte[] packInfo = "pckt1".getBytes();
             int infoSize = packInfo.length;
             //The buffer that the file will be read into with a max size
             //determined by the PACKET_SIZE constant
@@ -124,8 +124,8 @@ public class Server {
                 
                 //Copies the buffer into this new buffer
                 System.arraycopy(packInfo,0, sizeBuff, 0, packInfo.length);
-                System.arraycopy(buffer,0, sizeBuff, 5, buffer.length);
-               // sizeBuff = buffer;
+                System.arraycopy(buffer,0, sizeBuff, 5, size);
+                // sizeBuff = buffer;
                 //Creates a new packet with the above buffer of data.
                 //Uses the initial client packet to get the client's 
                 //address and port.
@@ -139,7 +139,7 @@ public class Server {
                 //packet was sent and Server is done transfering
                 RecACK(socket, pack);
                 
-                if (size < PACKET_SIZE)
+                if (size  + infoSize < PACKET_SIZE)
                 {
                     System.out.println("Transfer finished.");
                     socket.setSoTimeout(0);
