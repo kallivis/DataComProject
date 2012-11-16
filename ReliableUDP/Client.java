@@ -36,7 +36,8 @@ public class Client {
             //The byte buffer used for data the client is receiving
             byte[] rData = new byte[PACKET_SIZE];
             //Puts the message into the sending byte buffer
-            sdata = message.getBytes();
+            //            sdata = message.getBytes();
+            sdata = "SYNC".getBytes();            
 
             DatagramSocket socket = new DatagramSocket();
             // Socket timesout after 5 seconds to prevent infinite wait
@@ -49,6 +50,21 @@ public class Client {
             //Sends packet with the message to the server 
             socket.send(packet);
 
+            DatagramPacket rpacket = new DatagramPacket(rData, 
+                    rData.length);
+            socket.receive(rpacket);
+            String cmd1 = new String(rpacket.getData(), 0, 
+                    rpacket.getLength());
+            if (cmd1.equals("SYNACK"))
+            {
+            System.out.println(cmd1);
+                sdata = filename.getBytes();
+                packet = new DatagramPacket(sdata, sdata.length,
+                    address, 3031);
+                socket.send(packet);
+            }
+            else
+                return;
             //Checks if the message is Exit. If so the client exits as well
             if (message.equals("EXIT"))
             {
@@ -60,15 +76,13 @@ public class Client {
             //Opens a FileOutputStream to use to write the data in the above file.
             FileOutputStream fos = new FileOutputStream(file);
             //Creates the receiving packet for data comming form the server
-            DatagramPacket rpacket = new DatagramPacket(rData, 
-                    rData.length);
 
             System.out.println("Transfer started.");
             //The loop to received the packets of requested data.
             while (true) {
                 //Receives a packet sent from server
                 socket.receive(rpacket);
-                
+
                 byte[] cmd = "ACK".getBytes();
                 packet = new DatagramPacket(cmd, cmd.length, address, 3031);
                 socket.send(packet);
