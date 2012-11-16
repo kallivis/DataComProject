@@ -28,15 +28,31 @@ public class Server {
         //Opens it on port 3031
         DatagramSocket socket = new DatagramSocket(3031);
 
+
+        byte[] sdata = new byte[PACKET_SIZE]; 
         System.out.println("Server started at 3031 ...");
 
         //While server is running, Constantly listens for client requests
         while (true) {
             //Receives the request packet from the client
             socket.receive(packet);
+            String cmd = new String(packet.getData(), 0, 
+                    packet.getLength());
+            if (cmd.equals("SYNC"))
+            {
+            sdata = "SYNACK".getBytes();
+            DatagramPacket spacket = new DatagramPacket(sdata, sdata.length,
+                    packet.getAddress(), packet.getPort());
+                socket.send(spacket);
+                socket.receive(packet);
+                String filename = new String(packet.getData(), 0, 
+                    packet.getLength());
+                System.out.println("Filename: "+ filename);
+
+                new Server.TransferThread(socket, packet).run();
+            }
             //starts a new thread to send the packets of file
             //requested by the client.
-            new Server.TransferThread(socket, packet).run();
 
         }
     }
