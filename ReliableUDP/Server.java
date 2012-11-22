@@ -16,6 +16,7 @@ public class Server {
 
     //This is the size of the packets being sent and recieved 
     private final static int PACKET_SIZE = 512;
+    private final static int WINDOW_SIZE = 8;
 
     public static void main(String[] args) throws Exception
     {
@@ -47,12 +48,16 @@ public class Server {
                 socket.receive(packet);
                 String filename = new String(packet.getData(), 0, 
                     packet.getLength());
-                System.out.println("Filename: "+ filename);
-
+                if (filename.equals("EXIT"))
+                {
+                    System.out.println("Server Closing.");
+                    System.exit(0);
+                }
+                
+                //starts a new thread to send the packets of file
+                //requested by the client.
                 new Server.TransferThread(socket, packet).run();
             }
-            //starts a new thread to send the packets of file
-            //requested by the client.
 
         }
     }
@@ -79,24 +84,16 @@ public class Server {
             //setup a string with the requested filename
             String filename = new String(packet.getData(), 0, 
                     packet.getLength());
-            //If the requested message is "EXIT" then it shuts down the server
-            if (filename.equals("EXIT"))
+            System.out.println("Requested: " + filename);
+            try
             {
-                System.out.println("Server Closing.");
-                System.exit(0);
+                //Starts the SendStream for the given filename
+                SendStream(filename, socket);
             }
-            else
-            {
-                System.out.println("Requested: " + filename);
-                try
-                {
-                    //Starts the SendStream for the given filename
-                    SendStream(filename, socket);
-                } 
-                catch (IOException e) {
-                    e.printStackTrace();
-                } 
-            }
+            catch (IOException e) {
+                e.printStackTrace();
+            } 
+
         }
 
         //Method that takes a filename as it's param
@@ -124,6 +121,8 @@ public class Server {
             //determined by the PACKET_SIZE constant
             byte[] buffer = new byte[PACKET_SIZE-infoSize];
             System.out.println("Transfer started...");
+            
+            socket.setSoTimeout(20);
             while (true)
             {
                 //Reads part of the file into the buffer and sets the size of
@@ -145,12 +144,10 @@ public class Server {
                 //Creates a new packet with the above buffer of data.
                 //Uses the initial client packet to get the client's 
                 //address and port.
-                pack = new DatagramPacket(sizeBuff, size+infoSize, packet.getAddress(),
-                        packet.getPort());
+                pack = new DatagramPacket(sizeBuff, size+infoSize, packet.getAddress(), packet.getPort());
                 
                 //Sends the above packet to the client
                 socket.send(pack);
-                socket.setSoTimeout(50);
                 //If the size send was less than PACKET_SIZE then the last
                 //packet was sent and Server is done transfering
                 RecACK(socket, pack);
@@ -177,7 +174,6 @@ public class Server {
                     socket.setSoTimeout(0);
                     break;
                 }
-                
                 
             }
         }

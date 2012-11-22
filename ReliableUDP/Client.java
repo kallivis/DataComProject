@@ -14,6 +14,7 @@ public class Client {
 
     //This is the size of the packets being sent and recieved 
     private final static int PACKET_SIZE = 512;
+    private final static int WINDOW_SIZE = 8;
 
     public static void main(String[] args)
     {
@@ -41,7 +42,7 @@ public class Client {
 
             DatagramSocket socket = new DatagramSocket();
             // Socket timesout after 5 seconds to prevent infinite wait
-            socket.setSoTimeout(50);
+            socket.setSoTimeout(5000);
 
             //Creates the packet and puts in the message 
             DatagramPacket packet = new DatagramPacket(sdata, sdata.length,
@@ -57,7 +58,6 @@ public class Client {
                     rpacket.getLength());
             if (cmd1.equals("SYNACK"))
             {
-            System.out.println(cmd1);
                 sdata = filename.getBytes();
                 packet = new DatagramPacket(sdata, sdata.length,
                     address, 3031);
@@ -91,7 +91,6 @@ public class Client {
                 System.arraycopy(rpacket.getData(), 0, info, 0, 5);
                 System.arraycopy(rpacket.getData(), 5, data, 0, 
                         rpacket.getData().length - 5);
-                System.out.println("YO INFO: "+new String(info));
                 //Checks if the packet size is 0.
                 //If it is it knows the transfer is complete and client ends.
                 if  (rpacket.getLength() == 0)
