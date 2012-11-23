@@ -148,6 +148,7 @@ public class Server {
 
                 //Sends the above packet to the client
                 socket.send(pack);
+                socket.setSoTimeout(100);
                 //If the size send was less than PACKET_SIZE then the last
                 //packet was sent and Server is done transfering
                 RecACK(socket, pack);
