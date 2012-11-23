@@ -86,11 +86,12 @@ public class Client {
                 byte[] cmd = "ACK".getBytes();
                 packet = new DatagramPacket(cmd, cmd.length, address, 3031);
                 socket.send(packet);
-                byte[] info = new byte[5];
+                byte[] info = new byte[4];
                 byte[] data = new byte[rpacket.getData().length - 5];
-                System.arraycopy(rpacket.getData(), 0, info, 0, 5);
+
                 System.arraycopy(rpacket.getData(), 5, data, 0, 
                         rpacket.getData().length - 5);
+                System.out.println("Num"+Client.toInt(info, 0));
                 //Checks if the packet size is 0.
                 //If it is it knows the transfer is complete and client ends.
                 if  (rpacket.getLength() == 0)
@@ -118,6 +119,27 @@ public class Client {
         catch (IOException e) {
             e.printStackTrace();
         }
-
+        
     }
+   static byte[] toBytes(int i)
+        {
+            byte[] result = new byte[4];
+
+            result[0] = (byte) (i >> 24);
+            result[1] = (byte) (i >> 16);
+            result[2] = (byte) (i >> 8);
+            result[3] = (byte) (i /*>> 0*/);
+
+            return result;
+        }
+       static int toInt(byte[] bytes, int offset) {
+            int ret = 0;
+            for (int i=0; i<4 && i+offset<bytes.length; i++) {
+                ret <<= 8;
+                ret |= (int)bytes[i] & 0xFF;
+            }
+            return ret;
+
+        }
+ 
 }
