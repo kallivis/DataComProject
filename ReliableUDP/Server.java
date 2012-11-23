@@ -37,14 +37,19 @@ public class Server {
         while (true) {
             //Receives the request packet from the client
             socket.receive(packet);
+            //Creates a String from the packet Message
             String cmd = new String(packet.getData(), 0, 
                     packet.getLength());
+            //Checks if Client sent the SYNC Command
             if (cmd.equals("SYNC"))
             {
+                //Puts the String "SYNACK" into bytes
                 sdata = "SYNACK".getBytes();
+                //Creates a packet for the SYNACK
                 DatagramPacket spacket = new DatagramPacket(sdata, sdata.length,
                         packet.getAddress(), packet.getPort());
                 socket.send(spacket);
+                //Recieves the Packet with the Filename
                 socket.receive(packet);
                 String filename = new String(packet.getData(), 0, 
                         packet.getLength());
@@ -53,6 +58,7 @@ public class Server {
                     System.out.println("Server Closing.");
                     System.exit(0);
                 }
+                System.out.println("Filename: "+ filename);
 
                 //starts a new thread to send the packets of file
                 //requested by the client.
@@ -116,10 +122,9 @@ public class Server {
             // The remaining size that is left to send of the file
             int remainingSize = (int) file.length(); 
             byte[] packInfo = toBytes(1);
-            int infoSize = packInfo.length;
             //The buffer that the file will be read into with a max size
             //determined by the PACKET_SIZE constant
-            byte[] buffer = new byte[PACKET_SIZE-infoSize];
+            byte[] buffer = new byte[PACKET_SIZE-4];
             System.out.println("Transfer started...");
 
             socket.setSoTimeout(20);
@@ -135,16 +140,16 @@ public class Server {
                 //This is in case the size is less than the PACKET_SIZE 
                 //constant, so that the buffer is of exact size of the
                 //data that we are sending
-                byte[] sizeBuff = new byte[size+infoSize];
+                byte[] sizeBuff = new byte[size+4];
 
                 //Copies the buffer into this new buffer
                 System.arraycopy(packInfo,0, sizeBuff, 0, packInfo.length);
-                System.arraycopy(buffer,0, sizeBuff, 5, size);
+                System.arraycopy(buffer,0, sizeBuff, 4, size);
                 // sizeBuff = buffer;
                 //Creates a new packet with the above buffer of data.
                 //Uses the initial client packet to get the client's 
                 //address and port.
-                pack = new DatagramPacket(sizeBuff, size+infoSize, packet.getAddress(), packet.getPort());
+                pack = new DatagramPacket(sizeBuff, size+4, packet.getAddress(), packet.getPort());
 
                 //Sends the above packet to the client
                 socket.send(pack);
@@ -153,7 +158,7 @@ public class Server {
                 //packet was sent and Server is done transfering
                 RecACK(socket, pack);
 
-                if (size  + infoSize < PACKET_SIZE)
+                if (size  + 4 < PACKET_SIZE)
                 {
                     System.out.println("Transfer finished.");
                     socket.setSoTimeout(0);
@@ -176,9 +181,12 @@ public class Server {
                     break;
                 }
 
+
+
             }
         }
-
+        //This method Continually checks to see if the sent pack has been 
+        //ACKed and if not sends it again and calls itself to check again.
         private void RecACK(DatagramSocket socket, DatagramPacket pack)
         {
             byte[] buff = new byte[PACKET_SIZE];
@@ -191,6 +199,7 @@ public class Server {
 
                 String cmd = new String(packet.getData(), 0,
                         packet.getLength());
+                //If client did not ACK send packet again and recall itself
                 if (!cmd.equals("ACK"))
                 {
                     socket.send(pack);

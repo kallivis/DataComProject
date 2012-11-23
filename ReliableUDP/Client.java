@@ -36,8 +36,8 @@ public class Client {
             byte[] sdata = new byte[PACKET_SIZE]; 
             //The byte buffer used for data the client is receiving
             byte[] rData = new byte[PACKET_SIZE];
-            //Puts the message into the sending byte buffer
-            //            sdata = message.getBytes();
+
+            //Puts "Sync" into the send Data
             sdata = "SYNC".getBytes();            
 
             DatagramSocket socket = new DatagramSocket();
@@ -50,15 +50,21 @@ public class Client {
 
             //Sends packet with the message to the server 
             socket.send(packet);
-
+            
+            //Creates the recieve packet
             DatagramPacket rpacket = new DatagramPacket(rData, 
                     rData.length);
+
             socket.receive(rpacket);
+            //Pulls the string out of the recieved packet
             String cmd1 = new String(rpacket.getData(), 0, 
                     rpacket.getLength());
+            //Checks if the server sent SYNACK
             if (cmd1.equals("SYNACK"))
             {
+                //Puts the file named into the Send Data
                 sdata = filename.getBytes();
+                //Creates a Packet with the Filename
                 packet = new DatagramPacket(sdata, sdata.length,
                     address, 3031);
                 socket.send(packet);
@@ -82,15 +88,19 @@ public class Client {
             while (true) {
                 //Receives a packet sent from server
                 socket.receive(rpacket);
-
+                
+                //Puts the String "ACK" into Bytes
                 byte[] cmd = "ACK".getBytes();
+                //Creates and sends the ACK packet
                 packet = new DatagramPacket(cmd, cmd.length, address, 3031);
                 socket.send(packet);
                 byte[] info = new byte[4];
-                byte[] data = new byte[rpacket.getData().length - 5];
+                byte[] data = new byte[rpacket.getData().length - 4];
 
-                System.arraycopy(rpacket.getData(), 5, data, 0, 
-                        rpacket.getData().length - 5);
+                System.arraycopy(rpacket.getData(), 0, info, 0, 
+                        4);
+                System.arraycopy(rpacket.getData(), 4, data, 0, 
+                        rpacket.getData().length - 4);
                 System.out.println("Num"+Client.toInt(info, 0));
                 //Checks if the packet size is 0.
                 //If it is it knows the transfer is complete and client ends.
