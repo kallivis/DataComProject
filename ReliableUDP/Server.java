@@ -21,7 +21,7 @@ public class Server {
     {
         //The buffer for the initial message received from the Client
         byte[] buff = new byte[PACKET_SIZE];
-        
+
         //Creates the Packet to receive the request from the Client
         DatagramPacket packet = new DatagramPacket(buff, buff.length);
         //Opens a Datagram Socket that the server is running on
@@ -36,17 +36,22 @@ public class Server {
         while (true) {
             //Receives the request packet from the client
             socket.receive(packet);
+            //Creates a String from the packet Message
             String cmd = new String(packet.getData(), 0, 
                     packet.getLength());
+            //Checks if Client sent the SYNC Command
             if (cmd.equals("SYNC"))
             {
-            sdata = "SYNACK".getBytes();
-            DatagramPacket spacket = new DatagramPacket(sdata, sdata.length,
-                    packet.getAddress(), packet.getPort());
+                //Puts the String "SYNACK" into bytes
+                sdata = "SYNACK".getBytes();
+                //Creates a packet for the SYNACK
+                DatagramPacket spacket = new DatagramPacket(sdata, sdata.length,
+                        packet.getAddress(), packet.getPort());
                 socket.send(spacket);
+                //Recieves the Packet with the Filename
                 socket.receive(packet);
                 String filename = new String(packet.getData(), 0, 
-                    packet.getLength());
+                        packet.getLength());
                 System.out.println("Filename: "+ filename);
 
                 new Server.TransferThread(socket, packet).run();
@@ -70,7 +75,7 @@ public class Server {
             this.packet = packet;
             this.socket = socket;
         }
-        
+
         //The run method of the thread used to check on the request
         //and if a file is requested starts the sendStream 
         public void run()
@@ -107,7 +112,7 @@ public class Server {
             //Opens a file and a makes a file object from the
             //requested filename for reading.
             File file = new File(fileName);
-            
+
             //Creates a fileInputStream for reading in the file into a buffer
             FileInputStream fis = new FileInputStream(file);
             //Creates a DatagramPacket packet that will be used to send 
@@ -129,13 +134,13 @@ public class Server {
                 size = fis.read(buffer);
                 //Updates the remaining size by the amount read above
                 remainingSize -= size;
-                
+
                 //Creates a new buffer the size of the amount read
                 //This is in case the size is less than the PACKET_SIZE 
                 //constant, so that the buffer is of exact size of the
                 //data that we are sending
                 byte[] sizeBuff = new byte[size];
-                
+
                 //Copies the buffer into this new buffer
                 sizeBuff = buffer;
                 //Creates a new packet with the above buffer of data.
@@ -143,14 +148,15 @@ public class Server {
                 //address and port.
                 pack = new DatagramPacket(sizeBuff, size, packet.getAddress(),
                         packet.getPort());
-                
+
                 //Sends the above packet to the client
                 socket.send(pack);
                 socket.setSoTimeout(50);
+                 
+                RecACK(socket, pack);
                 //If the size send was less than PACKET_SIZE then the last
                 //packet was sent and Server is done transfering
-                RecACK(socket, pack);
-                
+
                 if (size < PACKET_SIZE)
                 {
                     System.out.println("Transfer finished.");
@@ -173,23 +179,25 @@ public class Server {
                     socket.setSoTimeout(0);
                     break;
                 }
-                
-                
+
+
             }
         }
-        
+        //This method Continually checks to see if the sent pack has been 
+        //ACKed and if not sends it again and calls itself to check again.
         private void RecACK(DatagramSocket socket, DatagramPacket pack)
         {
             byte[] buff = new byte[PACKET_SIZE];
-            
+
             DatagramPacket packet = new DatagramPacket(buff, buff.length);
-            
+
             try
             {
                 socket.receive(packet);
-            
+
                 String cmd = new String(packet.getData(), 0,
-                                    packet.getLength());
+                        packet.getLength());
+                //If client did not ACK send packet again and recall itself
                 if (!cmd.equals("ACK"))
                 {
                     socket.send(pack);
