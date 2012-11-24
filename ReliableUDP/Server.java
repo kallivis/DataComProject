@@ -12,11 +12,9 @@ import java.io.*;
 import java.net.*;
 import java.nio.*;
 
-public class Server {
+public class Server implements Settings {
 
   //This is the size of the packets being sent and recieved 
-  private final static int PACKET_SIZE = 512;
-  private final static int WINDOW_SIZE = 8;
 
   public static void main(String[] args) throws Exception
   {
@@ -122,7 +120,7 @@ public class Server {
       byte[] packInfo = ByteConverter.toBytes(1);
       //The buffer that the file will be read into with a max size
       //determined by the PACKET_SIZE constant
-      byte[] buffer = new byte[PACKET_SIZE-4];
+      byte[] buffer = new byte[PACKET_SIZE-INT_SIZE];
       System.out.println("Transfer started...");
 
       socket.setSoTimeout(20);
@@ -138,16 +136,16 @@ public class Server {
         //This is in case the size is less than the PACKET_SIZE 
         //constant, so that the buffer is of exact size of the
         //data that we are sending
-        byte[] sizeBuff = new byte[size+4];
+        byte[] sizeBuff = new byte[size+INT_SIZE];
 
         //Copies the buffer into this new buffer
         System.arraycopy(packInfo,0, sizeBuff, 0, packInfo.length);
-        System.arraycopy(buffer,0, sizeBuff, 4, size);
+        System.arraycopy(buffer,0, sizeBuff, INT_SIZE, size);
         // sizeBuff = buffer;
         //Creates a new packet with the above buffer of data.
         //Uses the initial client packet to get the client's 
         //address and port.
-        pack = new DatagramPacket(sizeBuff, size+4, packet.getAddress(), packet.getPort());
+        pack = new DatagramPacket(sizeBuff, size+INT_SIZE, packet.getAddress(), packet.getPort());
 
         //Sends the above packet to the client
         socket.send(pack);
@@ -155,7 +153,7 @@ public class Server {
         //packet was sent and Server is done transfering
         RecACK(socket, pack);
 
-        if (size  + 4 < PACKET_SIZE)
+        if (size  + INT_SIZE < PACKET_SIZE)
         {
           System.out.println("Transfer finished.");
           socket.setSoTimeout(0);

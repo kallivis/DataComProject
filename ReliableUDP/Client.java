@@ -10,11 +10,9 @@
 import java.io.*;
 import java.net.*;
 
-public class Client {
+public class Client implements Settings {
 
   //This is the size of the packets being sent and recieved 
-  private final static int PACKET_SIZE = 512;
-  private final static int WINDOW_SIZE = 8;
 
   public static void main(String[] args)
   {
@@ -94,13 +92,13 @@ public class Client {
         //Creates and sends the ACK packet
         packet = new DatagramPacket(cmd, cmd.length, address, 3031);
         socket.send(packet);
-        byte[] info = new byte[4];
-        byte[] data = new byte[rpacket.getData().length - 4];
+        byte[] info = new byte[INT_SIZE];
+        byte[] data = new byte[rpacket.getData().length - INT_SIZE];
 
         System.arraycopy(rpacket.getData(), 0, info, 0, 
-            4);
-        System.arraycopy(rpacket.getData(), 4, data, 0, 
-            rpacket.getData().length - 4);
+            INT_SIZE);
+        System.arraycopy(rpacket.getData(), INT_SIZE, data, 0, 
+            rpacket.getData().length - INT_SIZE);
         //System.out.println("Num"+Client.toInt(info, 0));
         //Checks if the packet size is 0.
         //If it is it knows the transfer is complete and client ends.
