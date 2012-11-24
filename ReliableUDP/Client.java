@@ -50,7 +50,7 @@ public class Client {
             //Sends packet with the message to the server 
             socket.send(packet);
             
-            "Creates the recieve packet
+            //Creates the recieve packet
             DatagramPacket rpacket = new DatagramPacket(rData, 
                     rData.length);
 

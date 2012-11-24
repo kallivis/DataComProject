@@ -8,7 +8,7 @@
  * to the directory Client.java is run from.
  */
 
-import java.io.*;
+imdport java.io.*;
 import java.net.*;
 import java.nio.*;
 
@@ -127,6 +127,8 @@ public class Server {
             //determined by the PACKET_SIZE constant
             byte[] buffer = new byte[PACKET_SIZE];
             System.out.println("Transfer started...");
+            
+            socket.setSoTimeout(50);
             while (true)
             {
                 //Reads part of the file into the buffer and sets the size of
@@ -151,7 +153,6 @@ public class Server {
 
                 //Sends the above packet to the client
                 socket.send(pack);
-                socket.setSoTimeout(50);
                  
                 RecACK(socket, pack);
                 //If the size send was less than PACKET_SIZE then the last
