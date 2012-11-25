@@ -236,7 +236,6 @@ public class Server implements Settings {
     public void run() {
       while(ackWait()) {
         try {
-          System.out.println("Resending "+sendNum);
           socket.send(windowPackets[sendNum]);
         }
         catch(IOException e){

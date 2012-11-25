@@ -46,7 +46,7 @@ public class Client implements Settings {
 
       DatagramSocket socket = new DatagramSocket();
       // Socket timesout after 5 seconds to prevent infinite wait
-      socket.setSoTimeout(5000);
+      socket.setSoTimeout(1000);
 
       //Creates the packet and puts in the message 
       DatagramPacket packet = new DatagramPacket(sdata, sdata.length,
@@ -117,7 +117,7 @@ public class Client implements Settings {
         System.arraycopy( rpacket.getData(),rpacket.getLength() - CHECKSUM_SIZE , code, 0, 
             CHECKSUM_SIZE);
         int packNum2 = ByteConverter.toInt(info, 0);
-        /*if (count2 ==3||count2 == 55|| count2 == 100 || count2 == 140)
+/*        if (count2 ==3||count2 == 55|| count2 == 100 || count2 == 140)
         {
           byte[] errorstuff = ByteConverter.toBytes(5); 
           data2[50] = errorstuff[0]; 
@@ -159,11 +159,11 @@ data2[30] = errorstuff[0];
 
             ackNum = ByteConverter.toBytes(packNum);
             packet = new DatagramPacket(ackNum, ackNum.length, address, 3031);
-        //    if (count2 != 24&& count2 != 58   && count2 != 138 && count2 != 111)
-         //   {
+//            if (count2 != 24&& count2 != 58   && count2 != 138 && count2 != 111)
+ //           {
 
               socket.send(packet);
-          //  }
+  //          }
 
             if (rpacket.getLength() == 0)
             {
