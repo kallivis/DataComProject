@@ -12,6 +12,7 @@ import java.io.*;
 import java.net.*;
 import java.nio.*;
 import java.util.HashMap;
+import java.util.zip.CRC32;
 
 public class Server implements Settings {
 
@@ -128,14 +129,15 @@ public class Server implements Settings {
       int size = 0;
       // The remaining size that is left to send of the file
       int remainingSize = (int) file.length(); 
-      int totalPackets = (int) Math.ceil(remainingSize/(PACKET_SIZE-INT_SIZE))+1;
+      int totalPackets = (int) Math.ceil(remainingSize/DATA_SIZE)+1;
       //The buffer that the file will be read into with a max size
       //determined by the PACKET_SIZE constant
-      byte[] buffer = new byte[PACKET_SIZE-INT_SIZE];
+      byte[] buffer = new byte[DATA_SIZE];
       System.out.println("Transfer started...");
 
       socket.setSoTimeout(5000);
       windowPackets = new DatagramPacket[totalPackets];
+            CRC32 crc = new CRC32();
       while (true)
       {
           //System.out.println("START OF WHILE TRUE");
@@ -153,19 +155,37 @@ public class Server implements Settings {
           //This is in case the size is less than the PACKET_SIZE 
           //constant, so that the buffer is of exact size of the
           //data that we are sending
-          byte[] sizeBuff = new byte[size+INT_SIZE];
+          int headerSize = size + SAC_SIZE;
+          byte[] sizeBuff = new byte[headerSize];
+          byte[] sizeBuff2 = new byte[headerSize-CHECKSUM_SIZE];
 
+                      //  System.out.println("CRC BYTES "+ByteConverter.longToBytes(crc.getValue()));
+           // System.out.println("CRC BYTES LENGTH "+ByteConverter.longToBytes(crc.getValue()).length);
 
           //Copies the buffer into this new buffer
           System.arraycopy(packInfo,0, sizeBuff, 0,INT_SIZE );
+          System.arraycopy(packInfo,0, sizeBuff2, 0,INT_SIZE );
           System.arraycopy(buffer,0, sizeBuff, INT_SIZE, size);
+          System.arraycopy(buffer,0, sizeBuff2, INT_SIZE, size);
+          crc.reset();
+crc.update(sizeBuff2, 0, sizeBuff2.length);
+//System.out.println("CODE2 "+crc.getValue());
+byte[] code = ByteConverter.toBytes((int)crc.getValue());
+//System.out.println("CODE "+ByteConverter.toInt(code,0));
+ //           System.out.println("CRC VALUE "+ByteConverter.toBytes((int)crc.getValue()).length);
+          System.arraycopy(code,0, sizeBuff, size+INT_SIZE,CHECKSUM_SIZE);
+          //  System.out.println("CRC VALUE "+crc.getValue());
+       //   crc.reset();
+        //    crc.update(sizeBuff, 0, sizeBuff.length);
+           // System.out.println("CRC VALUE2 "+crc.getValue());
+
           // sizeBuff = buffer;
           //Creates a new packet with the above buffer of data.
           //Uses the initial client packet to get the client's 
           //address and port.
 
           //System.out.println("Size "+(size+INT_SIZE));
-          windowPackets[i] = new DatagramPacket(sizeBuff, size+INT_SIZE, packet.getAddress(), packet.getPort());
+          windowPackets[i] = new DatagramPacket(sizeBuff, headerSize, packet.getAddress(), packet.getPort());
         }
         while ( base != totalPackets  || !timers.isEmpty())
         {
@@ -189,7 +209,7 @@ public class Server implements Settings {
      // System.out.println("SIZE"+size);
      // System.out.println("TOTAL PACKETS"+totalPackets);
      // System.out.println("REMAINING SIZE"+remainingSize);
-        if (size  + INT_SIZE < PACKET_SIZE)
+        if (size  + SAC_SIZE < PACKET_SIZE)
         {
           System.out.println("Transfer finished.");
           socket.setSoTimeout(0);

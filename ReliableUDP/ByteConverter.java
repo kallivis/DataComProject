@@ -1,4 +1,6 @@
+import java.nio.ByteBuffer;
 public class ByteConverter {
+
   static byte[] toBytes(int i)
   {
     byte[] result = new byte[4];
@@ -17,6 +19,11 @@ public class ByteConverter {
       ret |= (int)bytes[i] & 0xFF;
     }
     return ret;
+
+  }
+  static byte[] longToBytes(long value){
+    ByteBuffer bb = ByteBuffer.allocate(8);
+    return bb.putLong(value).array();
 
   }
 

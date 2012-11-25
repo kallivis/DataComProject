@@ -9,6 +9,7 @@
 
 import java.io.*;
 import java.net.*;
+import java.util.zip.CRC32;
 
 public class Client implements Settings {
 
@@ -91,6 +92,7 @@ public class Client implements Settings {
       DatagramPacket[] windowPackets = new DatagramPacket[WINDOW_SIZE];
       int count = 0;
       int count2 = 0;
+            CRC32 crc = new CRC32();
       while (!done) {
         //Receives a packet sent from server
         socket.receive(rpacket);
@@ -99,20 +101,38 @@ public class Client implements Settings {
         byte[] cmd = "ACK".getBytes();
         //Creates and sends the ACK packet
         byte[] info = new byte[INT_SIZE];
-        byte[] data = new byte[rpacket.getLength() - INT_SIZE];
+        byte[] code = new byte[CHECKSUM_SIZE];
+        byte[] data = new byte[rpacket.getLength() - SAC_SIZE];
+        byte[] data2 = new byte[rpacket.getLength() - CHECKSUM_SIZE];
         System.arraycopy(rpacket.getData(), 0, info, 0, 
             INT_SIZE);
         System.arraycopy(rpacket.getData(), INT_SIZE, data, 0, 
-            rpacket.getLength() - INT_SIZE);
-
+            rpacket.getLength() - SAC_SIZE);
+        System.arraycopy(rpacket.getData(), 0, data2, 0, 
+            rpacket.getLength() - CHECKSUM_SIZE);
+        System.arraycopy( rpacket.getData(),rpacket.getLength() - CHECKSUM_SIZE , code, 0, 
+           CHECKSUM_SIZE);
+      //  System.out.println("CODE "+ByteConverter.toInt(code,0));
+      //  System.out.println("SEQ "+ByteConverter.toInt(info,0));
+        int sCode = ByteConverter.toInt(code,0);
+        //System.out.println("CODE "+sCode);
         int packNum = ByteConverter.toInt(info, 0);
-        if (packNum-(base % WINDOW_SIZE) >= 0)
+          crc.reset();
+crc.update(data2, 0, data2.length);
+       // System.out.println("LENGTH "+(rpacket.getLength()-CHECKSUM_SIZE));
+      int cCode = (int)crc.getValue();
+        
+      //  System.out.println("sCode: "+sCode+"cCode: "+cCode);
+        if (cCode == sCode && packNum-(base % WINDOW_SIZE) >= 0)
           windowPackets[packNum-(base % WINDOW_SIZE)] = rpacket; 
         byte[] ackNum = ByteConverter.toBytes(packNum);
      //   System.out.println("ACKNUM "+packNum);
     //    System.out.println("BASE "+base);
+   if(cCode == sCode) 
+   {
         packet = new DatagramPacket(ackNum, ackNum.length, address, 3031);
           socket.send(packet);
+   }
           while( windowPackets[0] != null){
             DatagramPacket nextPack = windowPackets[0];
 
@@ -121,7 +141,7 @@ public class Client implements Settings {
       //  System.out.println("WROTE: "+ByteConverter.toInt(info, 0));
        // System.out.println("WROTE#: "+count++);
         System.arraycopy(nextPack.getData(), INT_SIZE, data, 0, 
-            nextPack.getLength() - INT_SIZE);
+            nextPack.getLength() - SAC_SIZE);
         //System.out.println("Num"+Client.toInt(info, 0));
         //Checks if the packet size is 0.
         //If it is it knows the transfer is complete and client ends.
