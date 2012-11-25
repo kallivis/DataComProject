@@ -83,6 +83,10 @@ public class Server implements Settings {
     {
       this.packet = packet;
       this.socket = socket;
+ base = 0;
+   nextSeq = 0;
+   timers = new HashMap<Integer, packetTimer>();
+
     }
 
     //The run method of the thread used to check on the request
@@ -124,18 +128,18 @@ public class Server implements Settings {
       int size = 0;
       // The remaining size that is left to send of the file
       int remainingSize = (int) file.length(); 
-      int totalPackets = (int) Math.ceil(remainingSize/PACKET_SIZE);
+      int totalPackets = (int) Math.ceil(remainingSize/(PACKET_SIZE-INT_SIZE))+1;
       //The buffer that the file will be read into with a max size
       //determined by the PACKET_SIZE constant
       byte[] buffer = new byte[PACKET_SIZE-INT_SIZE];
       System.out.println("Transfer started...");
 
-      socket.setSoTimeout(20);
-      DatagramPacket[] windowPackets = new DatagramPacket[totalPackets+1];
+      socket.setSoTimeout(5000);
+      windowPackets = new DatagramPacket[totalPackets];
       while (true)
       {
-          System.out.println("START OF WHILE TRUE");
-        for (int i = 0; i < totalPackets + 1; i++)
+          //System.out.println("START OF WHILE TRUE");
+        for (int i = 0; i < totalPackets; i++)
         {
 
           byte[] packInfo = ByteConverter.toBytes(i % WINDOW_SIZE);
@@ -160,30 +164,31 @@ public class Server implements Settings {
           //Uses the initial client packet to get the client's 
           //address and port.
 
+          //System.out.println("Size "+(size+INT_SIZE));
           windowPackets[i] = new DatagramPacket(sizeBuff, size+INT_SIZE, packet.getAddress(), packet.getPort());
         }
-        while ( base != totalPackets +1 || !timers.isEmpty())
+        while ( base != totalPackets  || !timers.isEmpty())
         {
-          while(nextSeq - base < WINDOW_SIZE && nextSeq < totalPackets +1)
+          while(nextSeq - base < WINDOW_SIZE && nextSeq < totalPackets )
           {
-            System.out.println("nextSeq: " +nextSeq);
-            System.out.println("base: " +base);
-            System.out.println("NUM: " +nextSeq % WINDOW_SIZE);
+         // System.out.println("nextSeq: " +nextSeq);
+         // System.out.println("base: " +base);
+         // System.out.println("NUM: " +nextSeq % WINDOW_SIZE);
             socket.send(windowPackets[nextSeq]);
-            timers.put(nextSeq % WINDOW_SIZE, new packetTimer(nextSeq % WINDOW_SIZE)); 
+            timers.put(nextSeq % WINDOW_SIZE, new packetTimer(nextSeq)); 
             timers.get(nextSeq % WINDOW_SIZE).start();
             nextSeq++;
           }
-          System.out.println("GET ACK");
+         // System.out.println("GET ACK");
           getACK();
         }
         //Sends the above packet to the client
         //If the size send was less than PACKET_SIZE then the last
         //packet was sent and Server is done transfering
         //  RecACK(socket, pack);
-          System.out.println("SIZE"+size);
-          System.out.println("TOTAL PACKETS"+totalPackets);
-          System.out.println("REMAINING SIZE"+remainingSize);
+     // System.out.println("SIZE"+size);
+     // System.out.println("TOTAL PACKETS"+totalPackets);
+     // System.out.println("REMAINING SIZE"+remainingSize);
         if (size  + INT_SIZE < PACKET_SIZE)
         {
           System.out.println("Transfer finished.");
@@ -247,8 +252,8 @@ public class Server implements Settings {
     public void run() {
       while(ackWait()) {
         try {
-          System.out.println("SendNum: "+sendNum);
-          socket.send(windowPackets[sendNum % WINDOW_SIZE]);
+          //System.out.println("SendNum: "+sendNum);
+          socket.send(windowPackets[sendNum]);
         }
         catch(IOException e){
         }

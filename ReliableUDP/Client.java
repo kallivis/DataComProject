@@ -90,6 +90,7 @@ public class Client implements Settings {
 
       DatagramPacket[] windowPackets = new DatagramPacket[WINDOW_SIZE];
       int count = 0;
+      int count2 = 0;
       while (!done) {
         //Receives a packet sent from server
         socket.receive(rpacket);
@@ -98,28 +99,29 @@ public class Client implements Settings {
         byte[] cmd = "ACK".getBytes();
         //Creates and sends the ACK packet
         byte[] info = new byte[INT_SIZE];
-        byte[] data = new byte[rpacket.getData().length - INT_SIZE];
-
+        byte[] data = new byte[rpacket.getLength() - INT_SIZE];
         System.arraycopy(rpacket.getData(), 0, info, 0, 
             INT_SIZE);
         System.arraycopy(rpacket.getData(), INT_SIZE, data, 0, 
-            rpacket.getData().length - INT_SIZE);
+            rpacket.getLength() - INT_SIZE);
+
         int packNum = ByteConverter.toInt(info, 0);
-        windowPackets[packNum-(base % WINDOW_SIZE)] = rpacket; 
+        if (packNum-(base % WINDOW_SIZE) >= 0)
+          windowPackets[packNum-(base % WINDOW_SIZE)] = rpacket; 
         byte[] ackNum = ByteConverter.toBytes(packNum);
-        System.out.println("ACKNUM "+packNum);
-        System.out.println("BASE "+base);
+     //   System.out.println("ACKNUM "+packNum);
+    //    System.out.println("BASE "+base);
         packet = new DatagramPacket(ackNum, ackNum.length, address, 3031);
-        socket.send(packet);
+          socket.send(packet);
           while( windowPackets[0] != null){
             DatagramPacket nextPack = windowPackets[0];
 
         System.arraycopy(nextPack.getData(), 0, info, 0, 
             INT_SIZE);
-        System.out.println("WROTE: "+ByteConverter.toInt(info, 0));
-        System.out.println("WROTE#: "+count++);
+      //  System.out.println("WROTE: "+ByteConverter.toInt(info, 0));
+       // System.out.println("WROTE#: "+count++);
         System.arraycopy(nextPack.getData(), INT_SIZE, data, 0, 
-            nextPack.getData().length - INT_SIZE);
+            nextPack.getLength() - INT_SIZE);
         //System.out.println("Num"+Client.toInt(info, 0));
         //Checks if the packet size is 0.
         //If it is it knows the transfer is complete and client ends.
@@ -130,6 +132,7 @@ public class Client implements Settings {
           break;
         }    
             fos.write(data, 0, data.length);
+           count++; 
             DatagramPacket[] temp = new DatagramPacket[windowPackets.length];
               System.arraycopy(windowPackets, 1, temp, 0, windowPackets.length -1);
             windowPackets = temp;
@@ -139,6 +142,7 @@ public class Client implements Settings {
             //that the transfer is complete and client ends.
             if (nextPack.getLength() < PACKET_SIZE) {
               System.out.println("File transferred");
+              //System.out.println("TOTAL: " + count);
           done = true;
               break;
             }
