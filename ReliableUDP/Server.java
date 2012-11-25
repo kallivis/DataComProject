@@ -84,9 +84,11 @@ public class Server implements Settings {
     {
       this.packet = packet;
       this.socket = socket;
- base = 0;
-   nextSeq = 0;
-   timers = new HashMap<Integer, packetTimer>();
+      base = 0;
+      nextSeq = 0;
+      totalSeq = 0;
+      timers = new HashMap<Integer, packetTimer>();
+
 
     }
 
@@ -137,15 +139,15 @@ public class Server implements Settings {
 
       socket.setSoTimeout(5000);
       windowPackets = new DatagramPacket[totalPackets];
-            CRC32 crc = new CRC32();
+      CRC32 crc = new CRC32();
       while (true)
       {
-          //System.out.println("START OF WHILE TRUE");
+        //System.out.println("START OF WHILE TRUE");
         int k = 0;
         for (int i = 0; i < totalPackets; i++)
         {
-                    byte[] packInfo = ByteConverter.toBytes(k);
-k ++;
+          byte[] packInfo = ByteConverter.toBytes(k);
+          k ++;
           if (k == MAX_SEQ)
             k = 0;
 
@@ -163,8 +165,8 @@ k ++;
           byte[] sizeBuff = new byte[headerSize];
           byte[] sizeBuff2 = new byte[headerSize-CHECKSUM_SIZE];
 
-                      //  System.out.println("CRC BYTES "+ByteConverter.longToBytes(crc.getValue()));
-           // System.out.println("CRC BYTES LENGTH "+ByteConverter.longToBytes(crc.getValue()).length);
+          //  System.out.println("CRC BYTES "+ByteConverter.longToBytes(crc.getValue()));
+          // System.out.println("CRC BYTES LENGTH "+ByteConverter.longToBytes(crc.getValue()).length);
 
           //Copies the buffer into this new buffer
           System.arraycopy(packInfo,0, sizeBuff, 0,INT_SIZE );
@@ -172,54 +174,32 @@ k ++;
           System.arraycopy(buffer,0, sizeBuff, INT_SIZE, size);
           System.arraycopy(buffer,0, sizeBuff2, INT_SIZE, size);
           crc.reset();
-crc.update(sizeBuff2, 0, sizeBuff2.length);
-//System.out.println("CODE2 "+crc.getValue());
-byte[] code = ByteConverter.toBytes((int)crc.getValue());
-//System.out.println("CODE "+ByteConverter.toInt(code,0));
- //           System.out.println("CRC VALUE "+ByteConverter.toBytes((int)crc.getValue()).length);
+          crc.update(sizeBuff2, 0, sizeBuff2.length);
+          byte[] code = ByteConverter.toBytes((int)crc.getValue());
           System.arraycopy(code,0, sizeBuff, size+INT_SIZE,CHECKSUM_SIZE);
-          //  System.out.println("CRC VALUE "+crc.getValue());
-       //   crc.reset();
-        //    crc.update(sizeBuff, 0, sizeBuff.length);
-           // System.out.println("CRC VALUE2 "+crc.getValue());
-
-          // sizeBuff = buffer;
           //Creates a new packet with the above buffer of data.
           //Uses the initial client packet to get the client's 
           //address and port.
 
-          //System.out.println("Size "+(size+INT_SIZE));
           windowPackets[i] = new DatagramPacket(sizeBuff, headerSize, packet.getAddress(), packet.getPort());
         }
         while ( totalSeq != totalPackets  || !timers.isEmpty())
         {
           while(timers.size() < WINDOW_SIZE && totalSeq < totalPackets )
           {
-            //System.out.println("TIMERS "+timers.size());
-          //System.out.println("nextSeq: " +nextSeq);
-          //System.out.println("ExpectedSeq: " +getExpectedSeq());
-        //  System.out.println("Base1: " +base);
-       //   System.out.println("NUM: " +nextSeq % WINDOW_SIZE);
             socket.send(windowPackets[totalSeq]);
-          //System.out.println("packet length: " +windowPackets[nextSeq].getLength());
             timers.put(nextSeq, new packetTimer(totalSeq)); 
             timers.get(nextSeq).start();
-            //System.out.println("2TIMERS "+timers.size());
             nextSeq++;
             if (nextSeq == MAX_SEQ)
               nextSeq = 0;
             totalSeq++;
           }
-         // System.out.println("GET ACK");
           getACK();
         }
         //Sends the above packet to the client
         //If the size send was less than PACKET_SIZE then the last
         //packet was sent and Server is done transfering
-        //  RecACK(socket, pack);
-     // System.out.println("SIZE"+size);
-     // System.out.println("TOTAL PACKETS"+totalPackets);
-     // System.out.println("REMAINING SIZE"+remainingSize);
         if (size  + SAC_SIZE < PACKET_SIZE)
         {
           System.out.println("Transfer finished.");
@@ -246,33 +226,6 @@ byte[] code = ByteConverter.toBytes((int)crc.getValue());
 
       }
     }
-    //This method Continually checks to see if the sent pack has been 
-    //ACKed and if not sends it again and calls itself to check again.
-    private void RecACK(DatagramSocket socket, DatagramPacket pack)
-    {
-      byte[] buff = new byte[PACKET_SIZE];
-
-      DatagramPacket packet = new DatagramPacket(buff, buff.length);
-
-      try
-      {
-        socket.receive(packet);
-
-        String cmd = new String(packet.getData(), 0,
-            packet.getLength());
-        //If client did not ACK send packet again and recall itself
-        if (!cmd.equals("ACK"))
-        {
-          socket.send(pack);
-          RecACK(socket, pack);
-        }
-      }
-      catch (IOException e)
-      {
-        //Do Nothing
-      }
-    }
-
   }
   private static class packetTimer extends Thread{
     int sendNum; 
@@ -283,13 +236,7 @@ byte[] code = ByteConverter.toBytes((int)crc.getValue());
     public void run() {
       while(ackWait()) {
         try {
-          //System.out.println("SendNum: "+sendNum);
-
-      //      System.out.println("TIMERS "+timers.size());
-  //        //System.out.println("packet length: " +windowPackets[sendNum].getLength());
-    //      byte[] inf = new byte[INT_SIZE];
-   //       System.arraycopy(windowPackets[sendNum].getData(),0, inf, 0,INT_SIZE );
-     //     System.out.println("packet length: " +ByteConverter.toInt(inf,0));
+          System.out.println("Resending "+sendNum);
           socket.send(windowPackets[sendNum]);
         }
         catch(IOException e){
@@ -318,8 +265,6 @@ byte[] code = ByteConverter.toBytes((int)crc.getValue());
       socket.receive(packet);
       byte[] info = packet.getData(); 
       int ackN = ByteConverter.toInt(info,0);
-      //System.out.println("ACK BASE: "+base);
-     // System.out.println("ACK: "+ackN);
       if(timers.containsKey(ackN)){
         timers.get(ackN).interrupt();
         timers.get(ackN).isACKed = true;
@@ -339,19 +284,7 @@ byte[] code = ByteConverter.toBytes((int)crc.getValue());
     }
 
   }
-public static int getExpectedSeq()
-  {
-    if (nextSeq < MAX_SEQ)
-      return nextSeq;
-    else
-return ((MAX_SEQ)/ nextSeq  )+(nextSeq % (MAX_SEQ ));
-  }
-public static int getExpectedBase()
-  {
-    if (base < MAX_SEQ)
-      return base;
-    else
-return ((MAX_SEQ)/ base  )+(base % (MAX_SEQ ));
-  }
+
+
 
 }
