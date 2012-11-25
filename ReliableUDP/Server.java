@@ -11,10 +11,17 @@
 import java.io.*;
 import java.net.*;
 import java.nio.*;
+import java.util.HashMap;
 
 public class Server implements Settings {
 
   //This is the size of the packets being sent and recieved 
+  //remainingSize / WINDOW_SIZE
+  static int base = 0;
+  static int  nextSeq = 0;
+  public static HashMap<Integer, packetTimer> timers = new HashMap<Integer, packetTimer>();
+  static DatagramPacket[] windowPackets;
+  static DatagramSocket socket;
 
   public static void main(String[] args) throws Exception
   {
@@ -25,7 +32,7 @@ public class Server implements Settings {
     DatagramPacket packet = new DatagramPacket(buff, buff.length);
     //Opens a Datagram Socket that the server is running on
     //Opens it on port 3031
-    DatagramSocket socket = new DatagramSocket(3031);
+    socket = new DatagramSocket(3031);
 
 
     byte[] sdata = new byte[PACKET_SIZE]; 
@@ -117,42 +124,65 @@ public class Server implements Settings {
       int size = 0;
       // The remaining size that is left to send of the file
       int remainingSize = (int) file.length(); 
-      byte[] packInfo = ByteConverter.toBytes(1);
+      int totalPackets = (int) Math.ceil(remainingSize/PACKET_SIZE);
       //The buffer that the file will be read into with a max size
       //determined by the PACKET_SIZE constant
       byte[] buffer = new byte[PACKET_SIZE-INT_SIZE];
       System.out.println("Transfer started...");
 
       socket.setSoTimeout(20);
+      DatagramPacket[] windowPackets = new DatagramPacket[totalPackets+1];
       while (true)
       {
-        //Reads part of the file into the buffer and sets the size of
-        //the amount read
-        size = fis.read(buffer);
-        //Updates the remaining size by the amount read above
-        remainingSize -= size;
+          System.out.println("START OF WHILE TRUE");
+        for (int i = 0; i < totalPackets; i++)
+        {
 
-        //Creates a new buffer the size of the amount read
-        //This is in case the size is less than the PACKET_SIZE 
-        //constant, so that the buffer is of exact size of the
-        //data that we are sending
-        byte[] sizeBuff = new byte[size+INT_SIZE];
+          byte[] packInfo = ByteConverter.toBytes(i % WINDOW_SIZE);
+          //Reads part of the file into the buffer and sets the size of
+          //the amount read
+          size = fis.read(buffer);
+          //Updates the remaining size by the amount read above
+          remainingSize -= size;
 
-        //Copies the buffer into this new buffer
-        System.arraycopy(packInfo,0, sizeBuff, 0, packInfo.length);
-        System.arraycopy(buffer,0, sizeBuff, INT_SIZE, size);
-        // sizeBuff = buffer;
-        //Creates a new packet with the above buffer of data.
-        //Uses the initial client packet to get the client's 
-        //address and port.
-        pack = new DatagramPacket(sizeBuff, size+INT_SIZE, packet.getAddress(), packet.getPort());
+          //Creates a new buffer the size of the amount read
+          //This is in case the size is less than the PACKET_SIZE 
+          //constant, so that the buffer is of exact size of the
+          //data that we are sending
+          byte[] sizeBuff = new byte[size+INT_SIZE];
 
+
+          //Copies the buffer into this new buffer
+          System.arraycopy(packInfo,0, sizeBuff, 0,INT_SIZE );
+          System.arraycopy(buffer,0, sizeBuff, INT_SIZE, size);
+          // sizeBuff = buffer;
+          //Creates a new packet with the above buffer of data.
+          //Uses the initial client packet to get the client's 
+          //address and port.
+
+          windowPackets[i] = new DatagramPacket(sizeBuff, size+INT_SIZE, packet.getAddress(), packet.getPort());;
+        }
+        while ( base != totalPackets || !timers.isEmpty())
+        {
+          while(nextSeq - base < WINDOW_SIZE && nextSeq < totalPackets)
+          {
+            System.out.println("nextSeq: " +nextSeq);
+            System.out.println("base: " +base);
+            socket.send(windowPackets[nextSeq]);
+            timers.put(nextSeq % WINDOW_SIZE, new packetTimer(nextSeq % WINDOW_SIZE)); 
+            timers.get(nextSeq % WINDOW_SIZE).start();
+            nextSeq++;
+          }
+          System.out.println("GET ACK");
+          getACK();
+        }
         //Sends the above packet to the client
-        socket.send(pack);
         //If the size send was less than PACKET_SIZE then the last
         //packet was sent and Server is done transfering
-        RecACK(socket, pack);
-
+        //  RecACK(socket, pack);
+          System.out.println("SIZE"+size);
+          System.out.println("TOTAL PACKETS"+totalPackets);
+          System.out.println("REMAINING SIZE"+remainingSize);
         if (size  + INT_SIZE < PACKET_SIZE)
         {
           System.out.println("Transfer finished.");
@@ -175,7 +205,6 @@ public class Server implements Settings {
           socket.setSoTimeout(0);
           break;
         }
-
 
 
       }
@@ -208,4 +237,60 @@ public class Server implements Settings {
     }
 
   }
+  private static class packetTimer extends Thread{
+    int sendNum; 
+    public boolean isACKed = false;
+    public packetTimer(int seqNum) {
+      sendNum = seqNum;
+    }
+    public void run() {
+      while(ackWait()) {
+        try {
+          System.out.println("SendNum: "+sendNum);
+          socket.send(windowPackets[sendNum % WINDOW_SIZE]);
+        }
+        catch(IOException e){
+        }
+
+      }
+    }
+    private boolean ackWait(){
+      if(this.interrupted()){
+        return false;
+
+      }
+      try{
+        Thread.sleep(THREAD_TIME);
+      }
+      catch(InterruptedException e){
+        return false;
+      }
+      return true;
+    }
+  }
+  private static synchronized void getACK() {
+    try{
+      byte[] buff = new byte[PACKET_SIZE];
+      DatagramPacket packet = new DatagramPacket(buff, buff.length);
+      socket.receive(packet);
+      byte[] info = packet.getData(); 
+      int ackN = ByteConverter.toInt(info,0);
+      if(timers.containsKey(ackN)){
+        timers.get(ackN).interrupt();
+        timers.get(ackN).isACKed = true;
+      }
+      if(base % WINDOW_SIZE == ackN){
+        while(timers.containsKey(base % WINDOW_SIZE) && timers.get(base % WINDOW_SIZE).isACKed){
+          timers.remove(base % WINDOW_SIZE);
+          base++;
+        }
+      }
+      Thread.yield();
+    }
+    catch(IOException e){
+
+    }
+
+  }
+
 }

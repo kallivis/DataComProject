@@ -13,6 +13,9 @@ import java.net.*;
 public class Client implements Settings {
 
   //This is the size of the packets being sent and recieved 
+  static int base = 0;
+  static int  nextSeq = 0;
+  static DatagramPacket[] windowPackets;
 
   public static void main(String[] args)
   {
@@ -83,6 +86,8 @@ public class Client implements Settings {
 
       System.out.println("Transfer started.");
       //The loop to received the packets of requested data.
+
+      DatagramPacket[] windowPackets = new DatagramPacket[WINDOW_SIZE];
       while (true) {
         //Receives a packet sent from server
         socket.receive(rpacket);
@@ -90,8 +95,6 @@ public class Client implements Settings {
         //Puts the String "ACK" into Bytes
         byte[] cmd = "ACK".getBytes();
         //Creates and sends the ACK packet
-        packet = new DatagramPacket(cmd, cmd.length, address, 3031);
-        socket.send(packet);
         byte[] info = new byte[INT_SIZE];
         byte[] data = new byte[rpacket.getData().length - INT_SIZE];
 
@@ -99,19 +102,36 @@ public class Client implements Settings {
             INT_SIZE);
         System.arraycopy(rpacket.getData(), INT_SIZE, data, 0, 
             rpacket.getData().length - INT_SIZE);
+        int packNum = ByteConverter.toInt(info, 0);
+        windowPackets[packNum] = rpacket; 
+        byte[] ackNum = ByteConverter.toBytes(packNum);
+        packet = new DatagramPacket(ackNum, ackNum.length, address, 3031);
+        socket.send(packet);
+        if (packNum == base) 
+        {
+          while( windowPackets[0] != null){
+            fos.write(data, 0, data.length);
+            DatagramPacket[] temp = new DatagramPacket[windowPackets.length];
+              System.arraycopy(windowPackets, 1, temp, 0, windowPackets.length -1);
+            windowPackets = temp;
+            base++;
+            //If the packet has data it writes it into the local file.
+            //If this packet is smaller than the agree upon size then it knows
+            //that the transfer is complete and client ends.
+            if (rpacket.getLength() < PACKET_SIZE) {
+              System.out.println("File transferred");
+              break;
+            }
+
+
+          }
+        }
+
         //System.out.println("Num"+Client.toInt(info, 0));
         //Checks if the packet size is 0.
         //If it is it knows the transfer is complete and client ends.
-        if  (rpacket.getLength() == 0)
+        if (base == WINDOW_SIZE && rpacket.getLength() == 0)
         {
-          System.out.println("File transferred");
-          break;
-        }
-        //If the packet has data it writes it into the local file.
-        fos.write(data, 0, data.length);
-        //If this packet is smaller than the agree upon size then it knows
-        //that the transfer is complete and client ends.
-        if (rpacket.getLength() < PACKET_SIZE) {
           System.out.println("File transferred");
           break;
         }
