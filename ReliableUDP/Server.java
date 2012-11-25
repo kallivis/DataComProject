@@ -135,7 +135,7 @@ public class Server implements Settings {
       while (true)
       {
           System.out.println("START OF WHILE TRUE");
-        for (int i = 0; i < totalPackets; i++)
+        for (int i = 0; i < totalPackets + 1; i++)
         {
 
           byte[] packInfo = ByteConverter.toBytes(i % WINDOW_SIZE);
@@ -160,14 +160,15 @@ public class Server implements Settings {
           //Uses the initial client packet to get the client's 
           //address and port.
 
-          windowPackets[i] = new DatagramPacket(sizeBuff, size+INT_SIZE, packet.getAddress(), packet.getPort());;
+          windowPackets[i] = new DatagramPacket(sizeBuff, size+INT_SIZE, packet.getAddress(), packet.getPort());
         }
-        while ( base != totalPackets || !timers.isEmpty())
+        while ( base != totalPackets +1 || !timers.isEmpty())
         {
-          while(nextSeq - base < WINDOW_SIZE && nextSeq < totalPackets)
+          while(nextSeq - base < WINDOW_SIZE && nextSeq < totalPackets +1)
           {
             System.out.println("nextSeq: " +nextSeq);
             System.out.println("base: " +base);
+            System.out.println("NUM: " +nextSeq % WINDOW_SIZE);
             socket.send(windowPackets[nextSeq]);
             timers.put(nextSeq % WINDOW_SIZE, new packetTimer(nextSeq % WINDOW_SIZE)); 
             timers.get(nextSeq % WINDOW_SIZE).start();

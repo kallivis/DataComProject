@@ -15,6 +15,7 @@ public class Client implements Settings {
   //This is the size of the packets being sent and recieved 
   static int base = 0;
   static int  nextSeq = 0;
+  static boolean done = false;
   static DatagramPacket[] windowPackets;
 
   public static void main(String[] args)
@@ -88,7 +89,8 @@ public class Client implements Settings {
       //The loop to received the packets of requested data.
 
       DatagramPacket[] windowPackets = new DatagramPacket[WINDOW_SIZE];
-      while (true) {
+      int count = 0;
+      while (!done) {
         //Receives a packet sent from server
         socket.receive(rpacket);
 
@@ -103,13 +105,30 @@ public class Client implements Settings {
         System.arraycopy(rpacket.getData(), INT_SIZE, data, 0, 
             rpacket.getData().length - INT_SIZE);
         int packNum = ByteConverter.toInt(info, 0);
-        windowPackets[packNum] = rpacket; 
+        windowPackets[packNum-(base % WINDOW_SIZE)] = rpacket; 
         byte[] ackNum = ByteConverter.toBytes(packNum);
+        System.out.println("ACKNUM "+packNum);
+        System.out.println("BASE "+base);
         packet = new DatagramPacket(ackNum, ackNum.length, address, 3031);
         socket.send(packet);
-        if (packNum == base) 
-        {
           while( windowPackets[0] != null){
+            DatagramPacket nextPack = windowPackets[0];
+
+        System.arraycopy(nextPack.getData(), 0, info, 0, 
+            INT_SIZE);
+        System.out.println("WROTE: "+ByteConverter.toInt(info, 0));
+        System.out.println("WROTE#: "+count++);
+        System.arraycopy(nextPack.getData(), INT_SIZE, data, 0, 
+            nextPack.getData().length - INT_SIZE);
+        //System.out.println("Num"+Client.toInt(info, 0));
+        //Checks if the packet size is 0.
+        //If it is it knows the transfer is complete and client ends.
+        if (nextPack.getLength() == 0)
+        {
+          System.out.println("File transferred");
+          done = true;
+          break;
+        }    
             fos.write(data, 0, data.length);
             DatagramPacket[] temp = new DatagramPacket[windowPackets.length];
               System.arraycopy(windowPackets, 1, temp, 0, windowPackets.length -1);
@@ -118,23 +137,16 @@ public class Client implements Settings {
             //If the packet has data it writes it into the local file.
             //If this packet is smaller than the agree upon size then it knows
             //that the transfer is complete and client ends.
-            if (rpacket.getLength() < PACKET_SIZE) {
+            if (nextPack.getLength() < PACKET_SIZE) {
               System.out.println("File transferred");
+          done = true;
               break;
             }
 
 
           }
-        }
 
-        //System.out.println("Num"+Client.toInt(info, 0));
-        //Checks if the packet size is 0.
-        //If it is it knows the transfer is complete and client ends.
-        if (base == WINDOW_SIZE && rpacket.getLength() == 0)
-        {
-          System.out.println("File transferred");
-          break;
-        }
+        
       }
       System.out.println("File length - " + file.length());
     } 
