@@ -17,9 +17,9 @@ import java.util.zip.CRC32;
 public class Server implements Settings {
 
   //This is the size of the packets being sent and recieved 
-  //remainingSize / WINDOW_SIZE
   static int base = 0;
   static int  nextSeq = 0;
+  static int  totalSeq = 0;
   public static HashMap<Integer, packetTimer> timers = new HashMap<Integer, packetTimer>();
   static DatagramPacket[] windowPackets;
   static DatagramSocket socket;
@@ -141,10 +141,14 @@ public class Server implements Settings {
       while (true)
       {
           //System.out.println("START OF WHILE TRUE");
+        int k = 0;
         for (int i = 0; i < totalPackets; i++)
         {
+                    byte[] packInfo = ByteConverter.toBytes(k);
+k ++;
+          if (k == MAX_SEQ)
+            k = 0;
 
-          byte[] packInfo = ByteConverter.toBytes(i % WINDOW_SIZE);
           //Reads part of the file into the buffer and sets the size of
           //the amount read
           size = fis.read(buffer);
@@ -187,17 +191,24 @@ byte[] code = ByteConverter.toBytes((int)crc.getValue());
           //System.out.println("Size "+(size+INT_SIZE));
           windowPackets[i] = new DatagramPacket(sizeBuff, headerSize, packet.getAddress(), packet.getPort());
         }
-        while ( base != totalPackets  || !timers.isEmpty())
+        while ( totalSeq != totalPackets  || !timers.isEmpty())
         {
-          while(nextSeq - base < WINDOW_SIZE && nextSeq < totalPackets )
+          while(timers.size() < WINDOW_SIZE && totalSeq < totalPackets )
           {
-         // System.out.println("nextSeq: " +nextSeq);
-         // System.out.println("base: " +base);
-         // System.out.println("NUM: " +nextSeq % WINDOW_SIZE);
-            socket.send(windowPackets[nextSeq]);
-            timers.put(nextSeq % WINDOW_SIZE, new packetTimer(nextSeq)); 
-            timers.get(nextSeq % WINDOW_SIZE).start();
+            //System.out.println("TIMERS "+timers.size());
+          //System.out.println("nextSeq: " +nextSeq);
+          //System.out.println("ExpectedSeq: " +getExpectedSeq());
+        //  System.out.println("Base1: " +base);
+       //   System.out.println("NUM: " +nextSeq % WINDOW_SIZE);
+            socket.send(windowPackets[totalSeq]);
+          //System.out.println("packet length: " +windowPackets[nextSeq].getLength());
+            timers.put(nextSeq, new packetTimer(totalSeq)); 
+            timers.get(nextSeq).start();
+            //System.out.println("2TIMERS "+timers.size());
             nextSeq++;
+            if (nextSeq == MAX_SEQ)
+              nextSeq = 0;
+            totalSeq++;
           }
          // System.out.println("GET ACK");
           getACK();
@@ -273,6 +284,12 @@ byte[] code = ByteConverter.toBytes((int)crc.getValue());
       while(ackWait()) {
         try {
           //System.out.println("SendNum: "+sendNum);
+
+      //      System.out.println("TIMERS "+timers.size());
+  //        //System.out.println("packet length: " +windowPackets[sendNum].getLength());
+    //      byte[] inf = new byte[INT_SIZE];
+   //       System.arraycopy(windowPackets[sendNum].getData(),0, inf, 0,INT_SIZE );
+     //     System.out.println("packet length: " +ByteConverter.toInt(inf,0));
           socket.send(windowPackets[sendNum]);
         }
         catch(IOException e){
@@ -301,14 +318,18 @@ byte[] code = ByteConverter.toBytes((int)crc.getValue());
       socket.receive(packet);
       byte[] info = packet.getData(); 
       int ackN = ByteConverter.toInt(info,0);
+      //System.out.println("ACK BASE: "+base);
+     // System.out.println("ACK: "+ackN);
       if(timers.containsKey(ackN)){
         timers.get(ackN).interrupt();
         timers.get(ackN).isACKed = true;
       }
-      if(base % WINDOW_SIZE == ackN){
-        while(timers.containsKey(base % WINDOW_SIZE) && timers.get(base % WINDOW_SIZE).isACKed){
-          timers.remove(base % WINDOW_SIZE);
+      if(base == ackN){
+        while(timers.containsKey(base) && timers.get(base).isACKed){
+          timers.remove(base);
           base++;
+          if (base == MAX_SEQ)
+            base = 0;
         }
       }
       Thread.yield();
@@ -317,6 +338,20 @@ byte[] code = ByteConverter.toBytes((int)crc.getValue());
 
     }
 
+  }
+public static int getExpectedSeq()
+  {
+    if (nextSeq < MAX_SEQ)
+      return nextSeq;
+    else
+return ((MAX_SEQ)/ nextSeq  )+(nextSeq % (MAX_SEQ ));
+  }
+public static int getExpectedBase()
+  {
+    if (base < MAX_SEQ)
+      return base;
+    else
+return ((MAX_SEQ)/ base  )+(base % (MAX_SEQ ));
   }
 
 }
