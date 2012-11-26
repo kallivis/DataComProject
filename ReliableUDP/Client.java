@@ -60,6 +60,7 @@ public class Client implements Settings {
           rData.length);
 
       socket.receive(rpacket);
+      System.out.println("RECIEVED");
       //Pulls the string out of the recieved packet
       String cmd1 = new String(rpacket.getData(), 0, 
           rpacket.getLength());
@@ -97,7 +98,7 @@ public class Client implements Settings {
       while (!done) {
         //Receives a packet sent from server
         socket.receive(rpacket);
-
+System.out.println("DATA RECIEVED");
         //Puts the String "ACK" into Bytes
         byte[] cmd = "ACK".getBytes();
         //Creates and sends the ACK packet

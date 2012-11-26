@@ -23,52 +23,141 @@ public class Server implements Settings {
   public static HashMap<Integer, packetTimer> timers = new HashMap<Integer, packetTimer>();
   static DatagramPacket[] windowPackets;
   static DatagramSocket socket;
+//  private static ServerSocket serverSocket = null;
+  private static Socket clientSocket = null;
+  private static final int MAX_CLIENTS = 10;
+  private static final clientThread[] threads =  new clientThread[MAX_CLIENTS];
+  private static HashMap<InetAddress,Integer> connections = new HashMap<InetAddress,Integer>();
+  private static int nextPort = 3032;
+  private static int connectionCount = 0;
 
   public static void main(String[] args) throws Exception
   {
     //The buffer for the initial message received from the Client
-    byte[] buff = new byte[PACKET_SIZE];
+   byte[] buff = new byte[PACKET_SIZE];
 
     //Creates the Packet to receive the request from the Client
     DatagramPacket packet = new DatagramPacket(buff, buff.length);
     //Opens a Datagram Socket that the server is running on
     //Opens it on port 3031
     socket = new DatagramSocket(3031);
+  //int portNum = 3031;
+ // serverSocket = new ServerSocket(portNum);
 
-
-    byte[] sdata = new byte[PACKET_SIZE]; 
+   // byte[] sdata = new byte[PACKET_SIZE]; 
     System.out.println("Server started at 3031 ...");
 
     //While server is running, Constantly listens for client requests
     while (true) {
-      //Receives the request packet from the client
       socket.receive(packet);
-      //Creates a String from the packet Message
-      String cmd = new String(packet.getData(), 0, 
-          packet.getLength());
-      //Checks if Client sent the SYNC Command
-      if (cmd.equals("SYNC"))
+      System.out.println("RECIEVED");
+      if (connections.get(packet.getAddress())!= null)
       {
-        //Puts the String "SYNACK" into bytes
-        sdata = "SYNACK".getBytes();
-        //Creates a packet for the SYNACK
-        DatagramPacket spacket = new DatagramPacket(sdata, sdata.length,
-            packet.getAddress(), packet.getPort());
-        socket.send(spacket);
-        //Recieves the Packet with the Filename
-        socket.receive(packet);
-        String filename = new String(packet.getData(), 0, 
-            packet.getLength());
-        if (filename.equals("EXIT"))
-        {
-          System.out.println("Server Closing.");
-          System.exit(0);
-        }
-        //starts a new thread to send the packets of file
-        //requested by the client.
-        new Server.TransferThread(socket, packet).run();
+        packet.setPort(connections.get(packet.getAddress()));
+        socket.send(packet);
+      }
+      else
+      {
+        int port = nextPort++;
+        InetAddress cAddress = packet.getAddress();
+        int cPort = packet.getPort();
+        connections.put(packet.getAddress(), port);
+        packet.setPort(port);
+        (threads[connectionCount++] = new clientThread(new DatagramSocket(port),cAddress,cPort, threads)).start();
+        socket.send(packet);
+      }
+//    int i = 0;
+//    for (i = 0; i < MAX_CLIENTS; i++){
+//      if(threads[i] == null)
+//      {
+//          break;
+ //       }
+  //    if (i == MAX_CLIENTS) {
+        //BUSY SERVER MESSAGE CAN GO HERE LATER
+   //   }
+      //Receives the request packet from the client
+      //socket.receive(packet);
+      //Creates a String from the packet Message
+//    String cmd = new String(packet.getData(), 0, 
+//        packet.getLength());
+//    //Checks if Client sent the SYNC Command
+//    if (cmd.equals("SYNC"))
+//    {
+//      //Puts the String "SYNACK" into bytes
+//      sdata = "SYNACK".getBytes();
+//      //Creates a packet for the SYNACK
+//      DatagramPacket spacket = new DatagramPacket(sdata, sdata.length,
+//          packet.getAddress(), packet.getPort());
+//      socket.send(spacket);
+//      //Recieves the Packet with the Filename
+//      socket.receive(packet);
+//      String filename = new String(packet.getData(), 0, 
+//          packet.getLength());
+//      if (filename.equals("EXIT"))
+//      {
+//        System.out.println("Server Closing.");
+//        System.exit(0);
+//      }
+//      //starts a new thread to send the packets of file
+//      //requested by the client.
+//      new Server.TransferThread(socket, packet).run();
       }
 
+    }
+  public static class clientThread extends Thread {
+    private DatagramSocket socket = null;
+    private final clientThread[] threads;
+    private int clientsCount;
+    private InetAddress address;
+    private int port;
+    public clientThread(DatagramSocket socket, InetAddress address, int port, clientThread[] threads) {
+      this.socket = socket;
+      this.threads = threads;
+      this.address = address;
+      this.port = port;
+      clientsCount = threads.length;
+    }
+    public void run() {
+      try{
+      System.out.println("RUNNING");
+      int clientsCount = this.clientsCount;
+      clientThread[] threads = this.threads;
+
+    byte[] buff = new byte[PACKET_SIZE];
+    byte[] sdata = new byte[PACKET_SIZE]; 
+    DatagramPacket packet = new DatagramPacket(buff, buff.length);
+    socket.receive(packet);
+    //Creates a String from the packet Message
+    String cmd = new String(packet.getData(), 0, 
+        packet.getLength());
+    //Checks if Client sent the SYNC Command
+    if (cmd.equals("SYNC"))
+    {
+      System.out.println("SYNC");
+      //Puts the String "SYNACK" into bytes
+      sdata = "SYNACK".getBytes();
+      //Creates a packet for the SYNACK
+      DatagramPacket spacket = new DatagramPacket(sdata, sdata.length,
+          address, port);
+      socket.send(spacket);
+      //Recieves the Packet with the Filename
+      socket.receive(packet);
+      String filename = new String(packet.getData(), 0, 
+          packet.getLength());
+      if (filename.equals("EXIT"))
+      {
+        System.out.println("Server Closing.");
+        System.exit(0);
+      }
+      //starts a new thread to send the packets of file
+      //requested by the client.
+      new Server.TransferThread(socket, packet,address, port).run();
+      }
+    }
+    catch(IOException e)
+    {
+      //NOTHING
+    }
     }
   }
   //Thread class for Transfering Packets
@@ -77,13 +166,17 @@ public class Server implements Settings {
     //Sets up a packet and Socket
     private DatagramPacket packet;
     private DatagramSocket socket;
+    private InetAddress address;
+    private int port;
 
     //Constructer for the thread Class
     //Takes a Socket and Packet as parameters
-    public TransferThread(DatagramSocket socket, DatagramPacket packet) 
+    public TransferThread(DatagramSocket socket, DatagramPacket packet,InetAddress address, int port) 
     {
       this.packet = packet;
       this.socket = socket;
+      this.address = address;
+      this.port = port;
       base = 0;
       nextSeq = 0;
       totalSeq = 0;
@@ -181,12 +274,14 @@ public class Server implements Settings {
           //Uses the initial client packet to get the client's 
           //address and port.
 
-          windowPackets[i] = new DatagramPacket(sizeBuff, headerSize, packet.getAddress(), packet.getPort());
+          windowPackets[i] = new DatagramPacket(sizeBuff, headerSize, address, port);
         }
         while ( totalSeq != totalPackets  || !timers.isEmpty())
         {
           while(timers.size() < WINDOW_SIZE && totalSeq < totalPackets )
           {
+            System.out.println("DATA SENT");
+            System.out.println("TOTALSEQ NUM"+totalSeq);
             socket.send(windowPackets[totalSeq]);
             timers.put(nextSeq, new packetTimer(totalSeq)); 
             timers.get(nextSeq).start();
@@ -215,7 +310,7 @@ public class Server implements Settings {
           //Creates the empty packet to send to the client to signal
           //that the transfer is complete
           pack = new DatagramPacket(new byte[0] , 0, 
-              packet.getAddress(),packet.getPort());
+              address,port);
           //Sends the empty packet
           socket.send(pack);
           System.out.println("Transfer finished.");

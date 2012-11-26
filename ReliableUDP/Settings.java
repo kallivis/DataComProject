@@ -1,5 +1,5 @@
 public interface Settings {
-  public final static int PACKET_SIZE = 264;
+  public final static int PACKET_SIZE = 10024;
   public final static int MAX_SEQ = 7; 
   public final static int INT_SIZE = 4;
   public final static int WINDOW_SIZE = (MAX_SEQ) / 2;
