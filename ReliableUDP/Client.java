@@ -117,24 +117,24 @@ public class Client implements Settings {
         System.arraycopy( rpacket.getData(),rpacket.getLength() - CHECKSUM_SIZE , code, 0, 
             CHECKSUM_SIZE);
         int packNum2 = ByteConverter.toInt(info, 0);
-/*        if (count2 ==3||count2 == 55|| count2 == 100 || count2 == 140)
-        {
-          byte[] errorstuff = ByteConverter.toBytes(5); 
-          data2[50] = errorstuff[0]; 
-          data2[48] = errorstuff[1]; 
-          data2[138] = errorstuff[2]; 
-          data2[448] = errorstuff[3]; 
-          data2[51] = errorstuff[0]; 
-          data2[49] = errorstuff[1]; 
-          data2[139] = errorstuff[2]; 
-          data2[449] = errorstuff[3]; 
-data2[30] = errorstuff[0]; 
-          data2[44] = errorstuff[1]; 
-          data2[144]= errorstuff[2]; 
-          data2[510] = errorstuff[3]; 
+        /*        if (count2 ==3||count2 == 55|| count2 == 100 || count2 == 140)
+                  {
+                  byte[] errorstuff = ByteConverter.toBytes(5); 
+                  data2[50] = errorstuff[0]; 
+                  data2[48] = errorstuff[1]; 
+                  data2[138] = errorstuff[2]; 
+                  data2[448] = errorstuff[3]; 
+                  data2[51] = errorstuff[0]; 
+                  data2[49] = errorstuff[1]; 
+                  data2[139] = errorstuff[2]; 
+                  data2[449] = errorstuff[3]; 
+                  data2[30] = errorstuff[0]; 
+                  data2[44] = errorstuff[1]; 
+                  data2[144]= errorstuff[2]; 
+                  data2[510] = errorstuff[3]; 
 
 
-        }*/
+                  }*/
         count2++;
         int sCode = ByteConverter.toInt(code,0);
         int packNum = ByteConverter.toInt(info, 0);
@@ -159,11 +159,11 @@ data2[30] = errorstuff[0];
 
             ackNum = ByteConverter.toBytes(packNum);
             packet = new DatagramPacket(ackNum, ackNum.length, address, 3031);
-//            if (count2 != 24&& count2 != 58   && count2 != 138 && count2 != 111)
- //           {
+            if (count2 != 24&& count2 != 58   && count2 != 138 && count2 != 111)
+            {
 
               socket.send(packet);
-  //          }
+            }
 
             if (rpacket.getLength() == 0)
             {

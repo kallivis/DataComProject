@@ -17,8 +17,8 @@ public  class TransferThread implements Runnable, Settings
   private DatagramPacket[] windowPackets;
   private int totalPackets;
 
-    private DatagramPacket pack;
-    private HashMap<Integer, packetTimer> timers;
+  private DatagramPacket pack;
+  private HashMap<Integer, packetTimer> timers;
   //Constructer for the thread Class
   //Takes a Socket and Packet as parameters
   public TransferThread(DatagramSocket socket, DatagramPacket packet) 
@@ -57,28 +57,28 @@ public  class TransferThread implements Runnable, Settings
   }
   private void setupWindowAndData(String fileName){
     try{
-    //Opens a file and a makes a file object from the
-    //requested filename for reading.
-    File file = new File(fileName);
+      //Opens a file and a makes a file object from the
+      //requested filename for reading.
+      File file = new File(fileName);
 
-    //Creates a fileInputStream for reading in the file into a buffer
-    FileInputStream fis = new FileInputStream(file);
-    //Creates a DatagramPacket packet that will be used to send 
-    //data to the client
+      //Creates a fileInputStream for reading in the file into a buffer
+      FileInputStream fis = new FileInputStream(file);
+      //Creates a DatagramPacket packet that will be used to send 
+      //data to the client
 
-    //Size that will hold the size of the buffer being sent
-    size = 0;
-    //The remaining size that is left to send of the file
-    remainingSize = (int) file.length(); 
-    totalPackets = (int) Math.ceil(remainingSize/DATA_SIZE)+1;
-    //The buffer that the file will be read into with a max size
-    //determined by the PACKET_SIZE constant
-    byte[] buffer = new byte[DATA_SIZE];
-    System.out.println("Transfer started...");
+      //Size that will hold the size of the buffer being sent
+      size = 0;
+      //The remaining size that is left to send of the file
+      remainingSize = (int) file.length(); 
+      totalPackets = (int) Math.ceil(remainingSize/DATA_SIZE)+1;
+      //The buffer that the file will be read into with a max size
+      //determined by the PACKET_SIZE constant
+      byte[] buffer = new byte[DATA_SIZE];
+      System.out.println("Transfer started...");
 
-    socket.setSoTimeout(5000);
-    windowPackets = new DatagramPacket[totalPackets];
-    CRC32 crc = new CRC32();
+      socket.setSoTimeout(5000);
+      windowPackets = new DatagramPacket[totalPackets];
+      CRC32 crc = new CRC32();
       //System.out.println("START OF WHILE TRUE");
       int k = 0;
       for (int i = 0; i < totalPackets; i++)
@@ -171,7 +171,6 @@ public  class TransferThread implements Runnable, Settings
     {
       while(timers.size() < WINDOW_SIZE && totalSeq < totalPackets )
       {
-        System.out.println("SENT");
         socket.send(windowPackets[totalSeq]);
         timers.put(nextSeq, new packetTimer(totalSeq,5)); 
         timers.get(nextSeq).start();
@@ -188,31 +187,31 @@ public  class TransferThread implements Runnable, Settings
   }
   private void finalCheck(){
     try{
-    //Sends the above packet to the client
-    //If the size send was less than PACKET_SIZE then the last
-    //packet was sent and Server is done transfering
-    if (size  + SAC_SIZE < PACKET_SIZE)
-    {
-      System.out.println("Transfer finished.");
-      socket.setSoTimeout(0);
-      return;
-    }
-    //If data was a multiple of PACKET_SIZE then the last packet
-    //when remaining size is equal to 0.
-    //An empty packet is then sent to the client to signal
-    //that the transfer is complete.
-    if (remainingSize == 0)  
-    {
-      //Creates the empty packet to send to the client to signal
-      //that the transfer is complete
-      pack = new DatagramPacket(new byte[0] , 0, 
-          packet.getAddress(),packet.getPort());
-      //Sends the empty packet
-      socket.send(pack);
-      System.out.println("Transfer finished.");
-      socket.setSoTimeout(0);
-      return;
-    }
+      //Sends the above packet to the client
+      //If the size send was less than PACKET_SIZE then the last
+      //packet was sent and Server is done transfering
+      if (size  + SAC_SIZE < PACKET_SIZE)
+      {
+        System.out.println("Transfer finished.");
+        socket.setSoTimeout(0);
+        return;
+      }
+      //If data was a multiple of PACKET_SIZE then the last packet
+      //when remaining size is equal to 0.
+      //An empty packet is then sent to the client to signal
+      //that the transfer is complete.
+      if (remainingSize == 0)  
+      {
+        //Creates the empty packet to send to the client to signal
+        //that the transfer is complete
+        pack = new DatagramPacket(new byte[0] , 0, 
+            packet.getAddress(),packet.getPort());
+        //Sends the empty packet
+        socket.send(pack);
+        System.out.println("Transfer finished.");
+        socket.setSoTimeout(0);
+        return;
+      }
     }
     catch (SocketException e){
 

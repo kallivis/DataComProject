@@ -15,7 +15,7 @@ import java.nio.*;
 public class Server implements Settings  {
 
   //This is the size of the packets being sent and recieved 
- 
+
 
   public static void main(String[] args) throws Exception
   {
@@ -26,7 +26,7 @@ public class Server implements Settings  {
     DatagramPacket packet = new DatagramPacket(buff, buff.length);
     //Opens a Datagram Socket that the server is running on
     //Opens it on port 3031
-  DatagramSocket socket = new DatagramSocket(3031);
+    DatagramSocket socket = new DatagramSocket(3031);
 
 
     System.out.println("Server started at 3031 ...");
