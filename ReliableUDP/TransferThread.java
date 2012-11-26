@@ -140,7 +140,6 @@ public  class TransferThread implements Runnable, Settings
       byte[] sdata = new byte[PACKET_SIZE]; 
         String user = cmd.substring(4);
         String dirList =FileOperator.getUserFiles(user);
-        System.out.println(dirList.getBytes().length);
         System.out.println(sdata.length);
         //System.out.println(("SYNACK"+dirList).getBytes().length);
         //Puts the String "SYNACK" into bytes

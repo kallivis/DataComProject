@@ -32,7 +32,6 @@ public class Client implements Settings {
     //Sets the filename equal to the command line argument
     //String filename = args[0];
     String filename ="";
-    String user = args[0];
     String message = args[0];
 
     try
@@ -45,7 +44,7 @@ public class Client implements Settings {
       byte[] rData = new byte[PACKET_SIZE];
 
       //Puts "Sync" into the send Data
-      sdata = ("SYNC"+user).getBytes();            
+      sdata = ("SYNC"+message).getBytes();            
 
       DatagramSocket socket = new DatagramSocket();
       // Socket timesout after 5 seconds to prevent infinite wait
@@ -100,25 +99,19 @@ public class Client implements Settings {
       //The loop to received the packets of requested data.
 
       windowPackets = new DatagramPacket[MAX_SEQ];
-      int count = 0;
-      int count2 = 0;
       CRC32 crc = new CRC32();
       while (!done) {
         //Receives a packet sent from server
         socket.receive(rpacket);
 
         //Puts the String "ACK" into Bytes
-        byte[] cmd = "ACK".getBytes();
         //Creates and sends the ACK packet
         byte[] info = new byte[INT_SIZE];
         byte[] code = new byte[CHECKSUM_SIZE];
         byte[] data = new byte[rpacket.getLength() - SAC_SIZE];
         byte[] data2 = new byte[rpacket.getLength() - CHECKSUM_SIZE];
-        byte[] all = new byte[rpacket.getLength() ];
         System.arraycopy(rpacket.getData(), 0, info, 0, 
             INT_SIZE);
-        System.arraycopy(rpacket.getData(), 0, all, 0, 
-            rpacket.getLength());
         System.arraycopy(rpacket.getData(), INT_SIZE, data, 0, 
             rpacket.getLength() - SAC_SIZE);
         System.arraycopy(rpacket.getData(), 0, data2, 0, 
@@ -126,25 +119,6 @@ public class Client implements Settings {
         System.arraycopy( rpacket.getData(),rpacket.getLength() - CHECKSUM_SIZE , code, 0, 
             CHECKSUM_SIZE);
         int packNum2 = ByteConverter.toInt(info, 0);
-        /*        if (count2 ==3||count2 == 55|| count2 == 100 || count2 == 140)
-                  {
-                  byte[] errorstuff = ByteConverter.toBytes(5); 
-                  data2[50] = errorstuff[0]; 
-                  data2[48] = errorstuff[1]; 
-                  data2[138] = errorstuff[2]; 
-                  data2[448] = errorstuff[3]; 
-                  data2[51] = errorstuff[0]; 
-                  data2[49] = errorstuff[1]; 
-                  data2[139] = errorstuff[2]; 
-                  data2[449] = errorstuff[3]; 
-                  data2[30] = errorstuff[0]; 
-                  data2[44] = errorstuff[1]; 
-                  data2[144]= errorstuff[2]; 
-                  data2[510] = errorstuff[3]; 
-
-
-                  }*/
-        count2++;
         int sCode = ByteConverter.toInt(code,0);
         int packNum = ByteConverter.toInt(info, 0);
         crc.reset();
@@ -152,7 +126,6 @@ public class Client implements Settings {
         int cCode = (int)crc.getValue();
 
         byte[] ackNum = ByteConverter.toBytes(packNum);
-        count2++;
         ArrayList<Integer> expecting  = new ArrayList<Integer>();
         if (cCode == sCode)
         {
