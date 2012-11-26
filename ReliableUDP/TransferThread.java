@@ -16,6 +16,7 @@ public  class TransferThread implements Runnable, Settings
   private int remainingSize;  
   private DatagramPacket[] windowPackets;
   private int totalPackets;
+  private String filename;
 
   private DatagramPacket pack;
   private HashMap<Integer, packetTimer> timers;
@@ -42,8 +43,6 @@ public  class TransferThread implements Runnable, Settings
     try
     {
       handShake();
-      String filename = new String(packet.getData(), 0, 
-          packet.getLength());
       System.out.println("Requested: " + filename);
       setupWindowAndData(filename);
       //Starts the SendStream for the given filename
@@ -133,22 +132,28 @@ public  class TransferThread implements Runnable, Settings
   private void handShake(){
     try{
       //Creates a String from the packet Message
-      byte[] sdata = new byte[PACKET_SIZE]; 
       String cmd = new String(packet.getData(), 0, 
           packet.getLength());
       //Checks if Client sent the SYNC Command
-      if (cmd.equals("SYNC"))
+      if (cmd.substring(0, 4).equals("SYNC"))
       {
+      byte[] sdata = new byte[PACKET_SIZE]; 
+        String user = cmd.substring(4);
+        String dirList =FileOperator.getUserFiles(user);
+        System.out.println(dirList.getBytes().length);
+        System.out.println(sdata.length);
         //Puts the String "SYNACK" into bytes
-        sdata = "SYNACK".getBytes();
+        sdata = ("SYNACK"+dirList).getBytes();
         //Creates a packet for the SYNACK
         DatagramPacket spacket = new DatagramPacket(sdata, sdata.length,
             packet.getAddress(), packet.getPort());
+        System.out.println(spacket.getLength());
         socket.send(spacket);
         //Recieves the Packet with the Filename
         socket.receive(packet);
-        String filename = new String(packet.getData(), 0, 
+        filename = new String(packet.getData(), 0, 
             packet.getLength());
+        filename = user+"/"+filename;
         if (filename.equals("EXIT"))
         {
           System.out.println("Server Closing.");

@@ -11,6 +11,7 @@ import java.io.*;
 import java.net.*;
 import java.util.zip.CRC32;
 import java.util.ArrayList;
+import java.util.Scanner;
 
 public class Client implements Settings {
 
@@ -29,8 +30,10 @@ public class Client implements Settings {
       return;
     }
     //Sets the filename equal to the command line argument
-    String filename = args[0];
-    String message = filename;
+    //String filename = args[0];
+    String filename ="";
+    String user = args[0];
+    String message = args[0];
 
     try
     {
@@ -42,7 +45,7 @@ public class Client implements Settings {
       byte[] rData = new byte[PACKET_SIZE];
 
       //Puts "Sync" into the send Data
-      sdata = "SYNC".getBytes();            
+      sdata = ("SYNC"+user).getBytes();            
 
       DatagramSocket socket = new DatagramSocket();
       // Socket timesout after 5 seconds to prevent infinite wait
@@ -64,8 +67,14 @@ public class Client implements Settings {
       String cmd1 = new String(rpacket.getData(), 0, 
           rpacket.getLength());
       //Checks if the server sent SYNACK
-      if (cmd1.equals("SYNACK"))
+      if (cmd1.substring(0,6).equals("SYNACK"))
       {
+        String dirList = cmd1.substring(6);
+        System.out.println(dirList);
+        System.out.flush();
+        System.out.println("Please type the file you wish to receive");
+        Scanner scan = new Scanner(System.in); 
+         filename = scan.next();
         //Puts the file named into the Send Data
         sdata = filename.getBytes();
         //Creates a Packet with the Filename
@@ -82,7 +91,7 @@ public class Client implements Settings {
         return;
       }
       //Creates a local file to put the data recieved from the server in.
-      File file = new File("local_" + message);
+      File file = new File("local_" + filename);
       //Opens a FileOutputStream to use to write the data in the above file.
       FileOutputStream fos = new FileOutputStream(file);
       //Creates the receiving packet for data comming form the server
