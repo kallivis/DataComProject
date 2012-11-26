@@ -26,7 +26,7 @@ public class Client implements Settings {
     // Checks if no command line args were given by usej
     if (args.length <= 0)
     {
-      System.out.println("No file specified!");
+      System.out.println("No user specified!");
       return;
     }
     //Sets the filename equal to the command line argument
