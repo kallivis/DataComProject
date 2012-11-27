@@ -71,9 +71,10 @@ public class Client implements Settings {
         String dirList = cmd1.substring(6);
         System.out.println(dirList);
         System.out.flush();
-        System.out.println("Please type the file you wish to receive");
+        System.out.println("Please type the file you wish to receive, or type " +
+                           "EXIT to close the server");
         Scanner scan = new Scanner(System.in); 
-         filename = scan.next();
+        filename = scan.next();
         //Puts the file named into the Send Data
         sdata = filename.getBytes();
         //Creates a Packet with the Filename
@@ -83,13 +84,20 @@ public class Client implements Settings {
       }
       else
         return;
-      //Checks if the message is Exit. If so the client exits as well
-      if (message.equals("EXIT"))
+      //Checks if the filename is Exit. If so the client exits as well
+      if (filename.equals("EXIT"))
       {
         System.out.println("Exit request sent.");
         return;
       }
       //Creates a local file to put the data recieved from the server in.
+      if (isNumber(filename))
+      {
+          System.out.println("What would you like to name this file?");
+          Scanner scan = new Scanner(System.in);
+          filename = scan.next();
+          System.out.println("File name requested: " + filename);
+      }
       File file = new File("local_" + filename);
       //Opens a FileOutputStream to use to write the data in the above file.
       FileOutputStream fos = new FileOutputStream(file);
@@ -141,7 +149,6 @@ public class Client implements Settings {
 
             ackNum = ByteConverter.toBytes(packNum);
             packet = new DatagramPacket(ackNum, ackNum.length, address, 3031);
-            if (count2 != 24&& count2 != 58   && count2 != 138 && count2 != 111)
             {
 
               socket.send(packet);
@@ -176,7 +183,6 @@ public class Client implements Settings {
 
             while(windowPackets[base] != null)
             {
-              count2++;
               DatagramPacket  nextPacket = windowPackets[base];
               windowPackets[base] = null;
 
@@ -261,4 +267,19 @@ public class Client implements Settings {
     }
 
   }
+    
+  //Check if integer is a string
+  public static boolean isNumber(String str)
+  {
+      try
+      {
+          int i = Integer.parseInt(str);
+      }
+      catch(NumberFormatException e)
+      {
+          return false;
+      }
+      return true;
+  }
+
 }

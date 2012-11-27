@@ -17,6 +17,7 @@ public  class TransferThread implements Runnable, Settings
   private DatagramPacket[] windowPackets;
   private int totalPackets;
   private String filename;
+  private String user;
 
   private DatagramPacket pack;
   private HashMap<Integer, packetTimer> timers;
@@ -44,7 +45,7 @@ public  class TransferThread implements Runnable, Settings
     {
       handShake();
       System.out.println("Requested: " + filename);
-      setupWindowAndData(filename);
+      setupWindowAndData(filename, user);
       //Starts the SendStream for the given filename
       SendStream(socket);
       finalCheck();
@@ -54,12 +55,19 @@ public  class TransferThread implements Runnable, Settings
     } 
 
   }
-  private void setupWindowAndData(String fileName){
+  private void setupWindowAndData(String fileName, String User){
     try{
       //Opens a file and a makes a file object from the
       //requested filename for reading.
+      if (isNumber(fileName))
+      {
+          File dir = new File(User);
+          File[] files = dir.listFiles();
+          fileName = User+"/"+files[Integer.parseInt(fileName)].getName();
+          System.out.println("File name requested: " + fileName);
+      }
       File file = new File(fileName);
-
+        
       //Creates a fileInputStream for reading in the file into a buffer
       FileInputStream fis = new FileInputStream(file);
       //Creates a DatagramPacket packet that will be used to send 
@@ -128,6 +136,8 @@ public  class TransferThread implements Runnable, Settings
     }
     catch (IOException e){
     }
+    catch(NumberFormatException e){
+    }
   }
   private void handShake(){
     try{
@@ -138,7 +148,7 @@ public  class TransferThread implements Runnable, Settings
       if (cmd.substring(0, 4).equals("SYNC"))
       {
       byte[] sdata = new byte[PACKET_SIZE]; 
-        String user = cmd.substring(4);
+        user = cmd.substring(4);
         String dirList =FileOperator.getUserFiles(user);
         System.out.println(sdata.length);
         //System.out.println(("SYNACK"+dirList).getBytes().length);
@@ -153,18 +163,35 @@ public  class TransferThread implements Runnable, Settings
         socket.receive(packet);
         filename = new String(packet.getData(), 0, 
             packet.getLength());
-        filename = user+"/"+filename;
+          
         if (filename.equals("EXIT"))
         {
-          System.out.println("Server Closing.");
-          System.exit(0);
+            System.out.println("Server Closing.");
+            System.exit(0);
         }
+        if (!isNumber(filename))
+            filename = user+"/"+filename;
 
       }
     }
     catch(IOException e){
 
     }
+  }
+
+    
+  //Check if integer is a string
+  public static boolean isNumber(String str)
+  {
+    try
+    {
+      int i = Integer.parseInt(str);
+    }
+    catch(NumberFormatException e)
+    {
+      return false;
+    }
+    return true;
   }
 
   //Method that takes a filename as it's param
