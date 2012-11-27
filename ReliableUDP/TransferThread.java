@@ -63,10 +63,25 @@ public  class TransferThread implements Runnable, Settings
       {
           File dir = new File(User);
           File[] files = dir.listFiles();
-          fileName = User+"/"+files[Integer.parseInt(fileName)].getName();
+          if (Integer.parseInt(fileName) >= files.length)
+              fileName = "NOTAFILE";
+          else
+              fileName = User+"/"+files[Integer.parseInt(fileName)].getName();
           System.out.println("File name requested: " + fileName);
       }
       File file = new File(fileName);
+      if (!file.isFile())
+          fileName = "NOTAFILE";
+        
+        //Creates a packet for the file ack
+        byte[] fdata = new byte[PACKET_SIZE];
+        if (fileName.equals("NOTAFILE"))
+            fdata = ("NOTAFILE").getBytes();
+        else
+            fdata = ("FILEACK-"+fileName).getBytes();
+        DatagramPacket filePacket = new DatagramPacket(fdata, fdata.length,
+                                                    packet.getAddress(), packet.getPort());
+        socket.send(filePacket);
         
       //Creates a fileInputStream for reading in the file into a buffer
       FileInputStream fis = new FileInputStream(file);
