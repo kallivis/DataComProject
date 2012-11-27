@@ -98,3 +98,11 @@ public class Client {
 
     }
 }
+
+
+
+(defun add-list (L)
+	(if (equal 0 (length L)) (print first))
+	(add (first L))
+	(add-list (rest L))
+)
