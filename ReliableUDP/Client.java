@@ -91,12 +91,19 @@ public class Client implements Settings {
         return;
       }
       //Creates a local file to put the data recieved from the server in.
-      if (isNumber(filename))
+        socket.receive(rpacket);
+        //Pulls the string out of the recieved packet
+        filename = new String(rpacket.getData(), 0,
+                                 rpacket.getLength());
+      if (filename.substring(0,7).equals("FILEACK"))
       {
-          System.out.println("What would you like to name this file?");
-          Scanner scan = new Scanner(System.in);
-          filename = scan.next();
+          filename = filename.substring(9+message.length(), filename.length());
           System.out.println("File name requested: " + filename);
+      }
+      else
+      {
+          System.out.println("Not a valid file!");
+          return;
       }
       File file = new File("local_" + filename);
       //Opens a FileOutputStream to use to write the data in the above file.
