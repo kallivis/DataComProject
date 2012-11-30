@@ -37,7 +37,7 @@ public class Client implements Settings {
     {
       //Creates an InetAddress using localhost  
       InetAddress address = InetAddress.getByName("localhost");
-      
+
       //The byte buffer used for data the client is sending
       byte[] sdata = new byte[PACKET_SIZE]; 
       //The byte buffer used for data the client is receiving
@@ -65,7 +65,7 @@ public class Client implements Settings {
       //Pulls the string out of the recieved packet
       String cmd1 = new String(rpacket.getData(), 0, 
           rpacket.getLength());
-      
+
       //Checks if the server sent SYNACK
       if (cmd1.substring(0,6).equals("SYNACK"))
       {
@@ -96,19 +96,19 @@ public class Client implements Settings {
       //Pulls the filename out of the recieved packet
       filename = new String(rpacket.getData(), 0,
           rpacket.getLength());
-      
+
       //Check if the first 7 characters are 'FILEACK', if so set file name
       //to the rest of the message
       if (filename.substring(0,7).equals("FILEACK"))
       {
-          filename = filename.substring(9+message.length(), filename.length());
-          System.out.println("File name requested: " + filename);
+        filename = filename.substring(9+message.length(), filename.length());
+        System.out.println("File name requested: " + filename);
       }
       else
       {
-          //If no FILEACK, then the file specified was not valid
-          System.out.println("Not a valid file!");
-          return;
+        //If no FILEACK, then the file specified was not valid
+        System.out.println("Not a valid file!");
+        return;
       }
       File file = new File("local_" + filename);
       //Opens a FileOutputStream to use to write the data in the above file.
@@ -129,7 +129,7 @@ public class Client implements Settings {
         byte[] code = new byte[CHECKSUM_SIZE];
         byte[] data = new byte[rpacket.getLength() - SAC_SIZE];
         byte[] data2 = new byte[rpacket.getLength() - CHECKSUM_SIZE];
-        
+
         //Split packet data into appropriate arrays
         System.arraycopy(rpacket.getData(), 0, info, 0, 
             INT_SIZE);
@@ -139,12 +139,12 @@ public class Client implements Settings {
             rpacket.getLength() - CHECKSUM_SIZE);
         System.arraycopy( rpacket.getData(),rpacket.getLength() - CHECKSUM_SIZE, 
             code, 0, CHECKSUM_SIZE);
-        
+
         //Convert seq num and other numbers from bytes to ints
         int packNum2 = ByteConverter.toInt(info, 0);
         int sCode = ByteConverter.toInt(code,0);
         int packNum = ByteConverter.toInt(info, 0);
-        
+
         //Reset and update crc for next packet
         crc.reset();
         crc.update(data2, 0, data2.length);
@@ -152,7 +152,7 @@ public class Client implements Settings {
 
         byte[] ackNum = ByteConverter.toBytes(packNum);
         ArrayList<Integer> expecting  = new ArrayList<Integer>();
-        
+
         //Check for errors
         if (cCode == sCode)
         {
@@ -171,7 +171,7 @@ public class Client implements Settings {
             ackNum = ByteConverter.toBytes(packNum);
             packet = new DatagramPacket(ackNum, ackNum.length, address, 3031);
             socket.send(packet);
-            
+
             //If last packet
             if (rpacket.getLength() == 0)
             {
@@ -181,10 +181,10 @@ public class Client implements Settings {
             //Write and move base forward
             fos.write(data, 0, data.length);
             base++;
-            
+
             if (base == MAX_SEQ)
               base = 0;
-            
+
             //update expected packets
             for (int i = 0; i < WINDOW_SIZE; i++)
             {
@@ -233,7 +233,7 @@ public class Client implements Settings {
               if (base == MAX_SEQ)
                 base = 0;
               expecting.clear();
-    
+
               //Update expected
               for (int i = 0; i < WINDOW_SIZE; i++)
               {
@@ -283,7 +283,7 @@ public class Client implements Settings {
           System.out.println("ERROR");
         }
       }
-      
+
       //transfer is done
       System.out.println("File length - " + file.length());
     } 
@@ -298,18 +298,18 @@ public class Client implements Settings {
     }
 
   }
-    
+
   //Check if integer is a string
   public static boolean isNumber(String str)
   {
-      try
-      {
-          int i = Integer.parseInt(str);
-      }
-      catch(NumberFormatException e)
-      {
-          return false;
-      }
-      return true;
+    try
+    {
+      int i = Integer.parseInt(str);
+    }
+    catch(NumberFormatException e)
+    {
+      return false;
+    }
+    return true;
   }
 }
