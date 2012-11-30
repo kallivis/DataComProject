@@ -21,7 +21,9 @@ public class Server implements Settings  {
 
     //Creates the Packet to receive the request from the Client
     DatagramPacket packet = new DatagramPacket(buff, buff.length);
-
+    //Opens a Datagram Socket that the server is running on
+    //Opens it on port 3031
+    DatagramSocket socket = new DatagramSocket(3031);
 
     System.out.println("Server started at 3031 ...");
 
