@@ -1,11 +1,9 @@
-/*
- * Program Name:    Server.java
- * Author(s):       Jeremy Wheaton, 100105823
+/* * Program Name:    Server.java * Author(s):       Jeremy Wheaton, 100105823
  *                  Cody McCarthy,  100097829 
- * Version:         2.0 - Nov 2, 2012
+ * Version:         3.0 - Nov 30, 2012
  * Purpose:
- * Can send any requested file (using UDP) from the directory that Server.java is run from
- * to the directory Client.java is run from.
+ * Can send any requested file (using UDP) from the directory that 
+ * Server.java is run from to the directory Client.java is run from.
  */
 
 import java.io.*;
@@ -14,7 +12,6 @@ import java.nio.*;
 
 public class Server implements Settings  {
 
-  //This is the size of the packets being sent and recieved 
 
 
   public static void main(String[] args) throws Exception
@@ -24,9 +21,6 @@ public class Server implements Settings  {
 
     //Creates the Packet to receive the request from the Client
     DatagramPacket packet = new DatagramPacket(buff, buff.length);
-    //Opens a Datagram Socket that the server is running on
-    //Opens it on port 3031
-    DatagramSocket socket = new DatagramSocket(3031);
 
 
     System.out.println("Server started at 3031 ...");

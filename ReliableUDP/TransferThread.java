@@ -3,10 +3,17 @@ import java.net.*;
 import java.nio.*;
 import java.util.HashMap;
 import java.util.zip.CRC32;
-//Thread class for Transfering Packets
+/*
+ * Program Name:    Server.java
+ * Author(s):       Jeremy Wheaton, 100105823
+ *                  Cody McCarthy,  100097829 
+ * Version:         3.0 - Nov 30, 2012
+ * Purpose:
+ * Thread class for Transfering Packets
+ */
+
 public  class TransferThread implements Runnable, Settings
 {
-  //Sets up a packet and Socket
   private DatagramPacket packet;
   private DatagramSocket socket;
   private int base = 0;
@@ -31,8 +38,6 @@ public  class TransferThread implements Runnable, Settings
     nextSeq = 0;
     totalSeq = 0;
     timers = new HashMap<Integer, packetTimer>();
-
-
   }
 
   //The run method of the thread used to check on the request
