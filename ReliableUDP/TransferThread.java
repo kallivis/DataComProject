@@ -16,17 +16,23 @@ public  class TransferThread implements Runnable, Settings
 {
   private DatagramPacket packet;
   private DatagramSocket socket;
+  //The first sequence number in the current current.
   private int base = 0;
+  //The next sequence number to send
   private int  nextSeq = 0;
+  // Highest sequence number sent so far
   private int  totalSeq = 0;
   private int size = 0;
   private int remainingSize;  
+  //An array of all the packets that will be sent
   private DatagramPacket[] windowPackets;
   private int totalPackets;
   private String filename;
   private String user;
 
   private DatagramPacket pack;
+  //HashMap of the Servers window
+  //Contains the Sequence Number and the packet
   private HashMap<Integer, packetTimer> timers;
   //Constructer for the thread Class
   //Takes a Socket and Packet as parameters
@@ -48,11 +54,15 @@ public  class TransferThread implements Runnable, Settings
     //setup a string with the requested filename
     try
     {
+      //Runs the client server handshake
       handShake();
       System.out.println("Requested: " + filename);
+      //Sets everything needed for the server sliding window and file data.
       setupWindowAndData(filename, user);
       //Starts the SendStream for the given filename
       SendStream(socket);
+      //Final check to see if the last packet was sent
+      //or if a 0 size packet needs to eb sent.
       finalCheck();
     }
     catch (IOException e) {
@@ -66,32 +76,34 @@ public  class TransferThread implements Runnable, Settings
       //requested filename for reading.
       if (isNumber(fileName))
       {
-          File dir = new File(User);
-          File[] files = dir.listFiles();
-          if (Integer.parseInt(fileName) >= files.length)
-              fileName = "NOTAFILE";
-          else
-              fileName = User+"/"+files[Integer.parseInt(fileName)].getName();
-          System.out.println("File name requested: " + fileName);
+        File dir = new File(User);
+        File[] files = dir.listFiles();
+        if (Integer.parseInt(fileName) >= files.length)
+          fileName = "NOTAFILE";
+        else
+          fileName = User+"/"+files[Integer.parseInt(fileName)].getName();
+        System.out.println("File name requested: " + fileName);
       }
       File file = new File(fileName);
+      //Check if the file is a file
       if (!file.isFile())
-          fileName = "NOTAFILE";
-        
-        //Creates a packet for the file ack
-        byte[] fdata = new byte[PACKET_SIZE];
-        if (fileName.equals("NOTAFILE"))
-            fdata = ("NOTAFILE").getBytes();
-        else
-            fdata = ("FILEACK-"+fileName).getBytes();
-        DatagramPacket filePacket = new DatagramPacket(fdata, fdata.length,
-                                                    packet.getAddress(), packet.getPort());
-        socket.send(filePacket);
-        
+        fileName = "NOTAFILE";
+
+      //Creates a packet for the file ack
+      byte[] fdata = new byte[PACKET_SIZE];
+      if (fileName.equals("NOTAFILE"))
+        fdata = ("NOTAFILE").getBytes();
+      else
+        fdata = ("FILEACK-"+fileName).getBytes();
+      //The packet for the file info 
+      DatagramPacket filePacket = new DatagramPacket(fdata, fdata.length,
+          packet.getAddress(), 
+          packet.getPort());
+      //Sends the file info packet
+      socket.send(filePacket);
+
       //Creates a fileInputStream for reading in the file into a buffer
       FileInputStream fis = new FileInputStream(file);
-      //Creates a DatagramPacket packet that will be used to send 
-      //data to the client
 
       //Size that will hold the size of the buffer being sent
       size = 0;
@@ -102,12 +114,15 @@ public  class TransferThread implements Runnable, Settings
       //determined by the PACKET_SIZE constant
       byte[] buffer = new byte[DATA_SIZE];
       System.out.println("Transfer started...");
-
+      //sets the timeout for the server to 5 seconds
       socket.setSoTimeout(5000);
+      //Creates a new array with the size of the total number packets
+      //that is going to be sent.
       windowPackets = new DatagramPacket[totalPackets];
+      //Sets up a crc generator
       CRC32 crc = new CRC32();
-      //System.out.println("START OF WHILE TRUE");
       int k = 0;
+      //Goes through every packet and puts it into the array of all packet
       for (int i = 0; i < totalPackets; i++)
       {
         byte[] packInfo = ByteConverter.toBytes(k);
@@ -126,28 +141,32 @@ public  class TransferThread implements Runnable, Settings
         //constant, so that the buffer is of exact size of the
         //data that we are sending
         int headerSize = size + SAC_SIZE;
+        //the byte array that will be put into the packet
         byte[] sizeBuff = new byte[headerSize];
+        //the byte array that will be used to generate the CRC code
         byte[] sizeBuff2 = new byte[headerSize-CHECKSUM_SIZE];
 
-        //  System.out.println("CRC BYTES "+ByteConverter.longToBytes(crc.getValue()));
-        // System.out.println("CRC BYTES LENGTH "+ByteConverter.longToBytes(crc.getValue()).length);
-
-        //Copies the buffer into this new buffer
+        //Copies the buffer into these new buffer
         System.arraycopy(packInfo,0, sizeBuff, 0,INT_SIZE );
         System.arraycopy(packInfo,0, sizeBuff2, 0,INT_SIZE );
         System.arraycopy(buffer,0, sizeBuff, INT_SIZE, size);
         System.arraycopy(buffer,0, sizeBuff2, INT_SIZE, size);
+        //Resets the crc
         crc.reset();
+        //Updates the CRC with the new info
         crc.update(sizeBuff2, 0, sizeBuff2.length);
+        //Gets the CRC value and puts it into a byte array
         byte[] code = ByteConverter.toBytes((int)crc.getValue());
+        //Adds the newly generated CRC code to the data array
         System.arraycopy(code,0, sizeBuff, size+INT_SIZE,CHECKSUM_SIZE);
         //Creates a new packet with the above buffer of data.
         //Uses the initial client packet to get the client's 
-        //address and port.
-
-        windowPackets[i] = new DatagramPacket(sizeBuff, headerSize, packet.getAddress(), packet.getPort());
+        //address and port, and puts it into the array of all packets.
+        windowPackets[i] = new DatagramPacket(sizeBuff, headerSize, 
+            packet.getAddress(), packet.getPort());
       }
     }
+    //Catches a bunch of exception
     catch(FileNotFoundException e){
 
     }
@@ -159,6 +178,7 @@ public  class TransferThread implements Runnable, Settings
     catch(NumberFormatException e){
     }
   }
+  //This method goes through the clietn server handshake
   private void handShake(){
     try{
       //Creates a String from the packet Message
@@ -167,7 +187,7 @@ public  class TransferThread implements Runnable, Settings
       //Checks if Client sent the SYNC Command
       if (cmd.substring(0, 4).equals("SYNC"))
       {
-      byte[] sdata = new byte[PACKET_SIZE]; 
+        byte[] sdata = new byte[PACKET_SIZE]; 
         user = cmd.substring(4);
         String dirList =FileOperator.getUserFiles(user);
         System.out.println(sdata.length);
@@ -181,26 +201,28 @@ public  class TransferThread implements Runnable, Settings
         socket.send(spacket);
         //Recieves the Packet with the Filename
         socket.receive(packet);
+        //Gets the filename from the packet
         filename = new String(packet.getData(), 0, 
             packet.getLength());
-          
+
         if (filename.equals("EXIT"))
         {
-            System.out.println("Server Closing.");
-            System.exit(0);
+          System.out.println("Server Closing.");
+          System.exit(0);
         }
         if (!isNumber(filename))
-            filename = user+"/"+filename;
+          filename = user+"/"+filename;
 
       }
     }
+    //Catches IOException
     catch(IOException e){
 
     }
   }
 
-    
-  //Check if integer is a string
+
+  //Check if string is a integer
   public static boolean isNumber(String str)
   {
     try
@@ -219,18 +241,23 @@ public  class TransferThread implements Runnable, Settings
   //to the client that requested it. 
   private void SendStream( DatagramSocket socket) throws IOException
   {
+
     while ( totalSeq != totalPackets  || !timers.isEmpty())
     {
       while(timers.size() < WINDOW_SIZE && totalSeq < totalPackets )
       {
+        //If there is  room in the window send the next packet
         socket.send(windowPackets[totalSeq]);
+        //Add that packet to a timer thread with a retry amount of 5
         timers.put(nextSeq, new packetTimer(totalSeq,5)); 
+        //Starts the thread
         timers.get(nextSeq).start();
         nextSeq++;
         if (nextSeq == MAX_SEQ)
           nextSeq = 0;
         totalSeq++;
       }
+      ///checks for an ack
       getACK();
     }
 
@@ -271,7 +298,7 @@ public  class TransferThread implements Runnable, Settings
     catch (IOException e){
     }
   }
-
+  //The fucntion that checks for acks
   private  synchronized void getACK() {
     try{
       byte[] buff = new byte[PACKET_SIZE];
@@ -279,10 +306,15 @@ public  class TransferThread implements Runnable, Settings
       socket.receive(packet);
       byte[] info = packet.getData(); 
       int ackN = ByteConverter.toInt(info,0);
+      //If the Server received an ack for a thread that is currently
+      //on a timer stops that timer and marks it as acked.
       if(timers.containsKey(ackN)){
         timers.get(ackN).interrupt();
         timers.get(ackN).isACKed = true;
       }
+      //If the lower window sequence number expected is received then
+      //removes it and all sequence threads that are stopped and 
+      //marked as ack
       if(base == ackN){
         while(timers.containsKey(base) && timers.get(base).isACKed){
           timers.remove(base);
@@ -298,20 +330,25 @@ public  class TransferThread implements Runnable, Settings
     }
 
   }
+  //The timer class thread for server packets waiting fof an ackt
   private  class packetTimer extends Thread{
     int sendNum; 
     int retries = 5; 
     int tries = 0;
     public boolean isACKed = false;
+    //Contructs a new packetTimer with a sequence number 
+    //and the number of retries
     public packetTimer(int seqNum, int retries) {
       this.sendNum = seqNum;
       this.retries = retries;
       this.tries = 0;
     }
+    //Runs the thread
     public void run() {
+      //Continues while waiting for an ack
       while(ackWait()) {
         try {
-
+          //Resends the packet if the timer rand out
           socket.send(windowPackets[sendNum]);
           if (tries++ >= retries)
           {
@@ -324,6 +361,7 @@ public  class TransferThread implements Runnable, Settings
 
       }
     }
+    //Sleeps and waits till interupted
     private boolean ackWait(){
       if(this.interrupted()){
         return false;
